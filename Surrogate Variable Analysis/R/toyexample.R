@@ -43,7 +43,7 @@ M1 = toy(n, pi, mu1, mu2, cov1, cov2)
 M2 = toy(n, pi, mu3, mu4, cov3, cov4)
 M = rbind(M1$data, M2$data)
 label = c(M1$label, M2$label)
-train = data.frame(y = c(rep(1,200), rep(2, 200)), M, label = label)
+train = data.frame(y = c(rep(1,200), rep(-1, 200)), M, label = label)
 
 
 # visualize data ----------------------------------------------------------
