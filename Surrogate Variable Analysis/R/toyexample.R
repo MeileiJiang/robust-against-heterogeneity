@@ -29,15 +29,15 @@ toy = function(n, pi, mu1, mu2, cov1, cov2){
 
 
 n = 50
-pi = 0.5
-mu1 = c(-4, 4, rep(0, 98))
-mu2 = c(4, 4, rep(0, 98))
-mu3 = c(-4, -4, rep(0, 98))
-mu4 = c(4, -4, rep(0, 98))
-cov1 = diag(rep(1,100))
-cov2 = diag(rep(1,100))
-cov3 = diag(rep(1,100))
-cov4 = diag(rep(1,100))
+pi = 0.8
+mu1 = c(-4, 4, rep(0, 198))
+mu2 = c(4, 4, rep(0, 198))
+mu3 = c(-4, -4, rep(0, 198))
+mu4 = c(4, -4, rep(0, 198))
+cov1 = diag(rep(1,200))
+cov2 = diag(rep(1,200))
+cov3 = diag(rep(1,200))
+cov4 = diag(rep(1,200))
 
 M1 = toy(n, pi, mu1, mu2, cov1, cov2)
 M2 = toy(n, pi, mu3, mu4, cov3, cov4)
@@ -56,6 +56,6 @@ ggplot(data = train, aes(x = X3, y = X4, color = y)) + geom_point(aes(shape = la
 
 # save the simulation data ------------------------------------------------
 
-save(train, file = "rdata/toyexample1.RData")
+save(train, file = "rdata/toyexample2.RData")
 
 
