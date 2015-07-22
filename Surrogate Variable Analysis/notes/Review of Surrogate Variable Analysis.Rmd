@@ -1,0 +1,16 @@
+---
+title: "Review of Surrogate Variable Analysis"
+author: "Meilei Jiang"
+data: July 22, 2015
+output: html_document
+---
+
+Data variation and heterogeneity
+===================================================================
+Data variation dues to lots of factors:
+
+- modeled factors (primary variables)
+- unmodeled factors (batch effects)
+- random sampling variation (white noise) 
+
+Data matrix **$X$**  =  (**$x_1$**, \dots, **$x_m$**) , and $x_i$ = $(x_{i1}, \dots, x_{in}), i = 1, \dots, m.$
