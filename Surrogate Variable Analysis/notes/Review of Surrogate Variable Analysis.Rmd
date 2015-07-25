@@ -5,12 +5,220 @@ data: July 22, 2015
 output: html_document
 ---
 
-Data variation and heterogeneity
-===================================================================
-Data variation dues to lots of factors:
+## Data variation and heterogeneity
 
-- modeled factors (primary variables)
-- unmodeled factors (batch effects)
-- random sampling variation (white noise) 
+Data variation dues to different kinds of factors:
 
-Data matrix **$X$**  =  (**$x_1$**, \dots, **$x_m$**) , and $x_i$ = $(x_{i1}, \dots, x_{in}), i = 1, \dots, m.$
+- modeled factors (primary variables): e.g. class labels
+- unmodeled factors (batch effects): e.g. age, sex
+- random sampling variation (white noise) : e.g. systematic error
+
+In practice, we are interested in the effects of primary variables. For instance, we want to training a model by class labels. However, the effects of primary variables can be blurred by unmodeled factors. Even the data from the same class can be expressed differently, which is also called heterogeneity. 
+
+The surrogate variable analysis (SVA) builds up a linear model for data variation and tries to construct surrogate variables to present the batch effects.
+
+### Models for data variation
+
+The $m \times n$ random data matrix $X =(x_1, \dots, x_m)'$ contains $m$ features and each feature $x_i$ = $(x_{i1}, \dots, x_{in})'$ has the expression from $n$ samples. The primary variables are $Y = (y_1, \dots, y_n)'$. 
+
+Assume that $\mathbb{E}[x_i|Y] = b_i S(Y) = b_i S$, where $S$ is the matrix of basis function (primary variables) with dimension $d$. In the matrix form, the model can be written as:
+                                        $$X = B S + E$$
+Moreover, we have subsequent decomposion:
+                                        $$E = \Gamma G + U$$
+where $G$ are the unmodeled factors (dependance kernel) with dimension $r$ and $U$ is the random noise. We assume that $d + r < n.$ Leek and Storey (2008) showed that this decomposion exists generally.
+
+When the structure of $G$ is unknown, a set of surrogate variables $\hat{G}$ are constructed by SVA algorithm.
+
+### Detect unmodeled factors
+
+If there are no batch effects, i.e.$G = 0$,  the residu matrix $R = X - \hat{B} S$ should not have unusally large variations in some specific directions. To estimate the dimension $r$ of unmodeled factors, the number of unusally large eigenvalues need to be determined. 
+
+In the SVA, an permutation test, a non-parametric approach, is proposed on the residual matrix $R$. It compares the proportion of singular values in $R$ to the proportion of singular values in randomized residual matrices, where each row is permuted individually to break down any structure across rows.
+
+### Construct surrogate variables
+
+The sva algorithm does not attempt to estimate the unmodeled factors $G$. In fact, the sva constructs surrogate variables to represent the variation not caused by primary variables. 
+
+Say in the previous step, $\hat{K}$ unusally large eigenvalues are identified. For $\lambda_k, k = 1, \cdots, \hat{K}$, take out its corresponding right singular vectors $e_k$. In some sense, $e_k$ can act as surrogate variable $\hat{g}_k$. However, when $\hat{G}$ and $S$ are not orthogonal，$\hat{B}$, the estimation of the effects of $S$ is biased and so are $R$ and $e_k$.
+
+To reduce this bias, next, subset of feasures $X^{(r)}$ which have a strong assosiation with $e_k$ are idtentified. Then refit the model with $X^{r}$ and obtain the residual matrix $R^{r}$. Last, identify the eigenvector $e_{j_k}^{r}$ of $R^{r}$ which has the largest correlation coefficient with $e_k$.
+
+We can choose $e_{j_k}^{r}$ as $\hat{g}_k$ or continue this iteration. This approach can up-weight the features that show strong assotiation with $G$ and down-weight feasures that show strong association with $S$.
+
+### Simulation study
+
+The current sva algorithm requires that the data has at least 3 feasures. We consider a 2-class toy example and sample in each class has a Gaussian Mixture distribution. 
+
+#### 3 feasures data set
+Training data are divided into two class:
+
+- Class A: $Y1 \sim (1 - \pi_1) \mathrm{N}\Big( (4, -4, 0)', I_3 \Big) + \pi_1 \mathrm{N}\Big( (4, 4, 0)', I_3 \Big)$, where $\pi_1 \sim \text{Binom}(0.5)$;
+- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (4, -4, 0)', I_3 \Big) + \pi_2 \mathrm{N}\Big( (4, 4, 0)', I_3 \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
+
+The plots of data are as following:
+
+- $X_1$ is the primary variables
+- $X_2$ is the batch effects
+- $X_3$ is the random noise
+
+```{r qplot, echo = FALSE, warning=FALSE, message = FALSE}
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+load("/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/rdata/toyexample.RData")
+M3d <- train3d[,2:4]
+# Expression data
+Edata3d = t(M3d)
+Mdata3d = melt(Edata3d)
+
+g1 = ggplot(Mdata3d, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g1)
+g2 = ggplot(data = train3d, aes(x = X1, y = X2, color = y)) + geom_point(aes(shape = batch))
+print(g2)
+
+```
+Then, we apply sva algorithm to detect the number of surrogate variables.
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(sva)
+# make model matrix -------------------------------------------------------
+## full model 
+mod_3d = model.matrix(~ y, data = train3d)
+## null model
+mod0_3d = model.matrix(~ 1, data = train3d)
+
+# estimate the number of latent factors that need to be estimated ---------
+n.sv_be_3d = num.sv(Edata3d,mod_3d,method="be")
+print(n.sv_be_3d)
+
+```
+
+The algorithm fails to detect the number of SV.
+
+#### 10 feasures data set
+Training data are divided into two class:
+
+- Class A: $Y1 \sim (1 - \pi_1) \mathrm{N}\Big( (2, -2, 0, \dots, 0)', I_{10} \Big) + \pi_1 \mathrm{N}\Big( (2, 2, 0, \dots, 0)', I_{10} \Big)$, where $\pi_1 \sim \text{Binom}(0.5)$;
+- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (2, -2, 0, \dots, 0)', I_{10} \Big) + \pi_2 \mathrm{N}\Big( (2, 2, 0, \dots, 0)', I_{10} \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
+
+The plots of data are as following:
+
+- $X_1$ is the primary variables
+- $X_2$ is the batch effects
+- $X_3, \dots, X_10$ is the random noise
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+
+M10d <- train10d %>% select(-y, -batch)
+# Expression data
+Edata10d = t(M10d)
+Mdata10d = melt(Edata10d)
+
+g4 = ggplot(Mdata10d, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g4)
+
+```
+Then, we apply sva algorithm to detect the number of surrogate variables.
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(sva)
+# make model matrix -------------------------------------------------------
+## full model 
+mod_10d = model.matrix(~ y, data = train10d)
+## null model
+mod0_10d = model.matrix(~ 1, data = train10d)
+
+# estimate the number of latent factors that need to be estimated ---------
+n.sv_be_10d = num.sv(Edata10d,mod_10d,method="be")
+print(n.sv_be_10d)
+
+```
+
+The algorithm fails to detect the heterogeneity.
+
+#### 100 feasures data set
+Training data are divided into two class:
+
+- Class A: $Y1 \sim (1 - \pi_1) \mathrm{N}\Big( (2, -2, 0, \dots, 0)', I_{100} \Big) + \pi_1 \mathrm{N}\Big( (2, 2, 0, \dots, 0)', I_{100} \Big)$, where $\pi_1 \sim \text{Binom}(0.5)$;
+- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (2, -2, 0, \dots, 0)', I_{100} \Big) + \pi_2 \mathrm{N}\Big( (2, 2, 0, \dots, 0)', I_{100} \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
+
+The plots of data are as following:
+
+- $X_1$ is the primary variables
+- $X_2$ is the batch effects
+- $X_3, \dots, X_100$ is the random noise
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+
+M100d <- train100d %>% select(-y, -batch)
+# Expression data
+Edata100d = t(M100d)
+Mdata100d = melt(Edata100d)
+
+g5 = ggplot(Mdata100d, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g5)
+
+Mdata100d.0 = melt(Edata100d[1:10, ])
+g5.0 = ggplot(Mdata100d.0, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g5.0)
+```
+
+Then, we apply sva algorithm to detect the number of surrogate variables.
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(sva)
+# make model matrix -------------------------------------------------------
+## full model 
+mod_100d = model.matrix(~ y, data = train100d)
+## null model
+mod0_100d = model.matrix(~ 1, data = train100d)
+
+# estimate the number of latent factors that need to be estimated ---------
+n.sv_be_100d = num.sv(Edata100d,mod_100d,method="be")
+print(n.sv_be_100d)
+```
+
+Next we construct SV.
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(ggplot2)
+library(reshape2)
+library(sva)
+# estimate the surrogate variables
+svobj100d = sva(Edata100d,mod_100d,mod0_100d,n.sv= n.sv_be_100d, B = 5)
+fsvobj100d = fsva(Edata100d, mod_100d, svobj100d, Edata100d)
+
+# get the data adjusted by the sv
+Edb100d = fsvobj100d$db
+Mdb100d = melt(Edb100d)
+g5.1 = ggplot(Mdb100d, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = "1 Surrogate Variables") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g5.1)
+
+Mdb100d.0 = melt(Edb100d[1:10,])
+g5.2 = ggplot(Mdb100d.0, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = "1 Surrogate Variables") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g5.2)
+```
+
+### Conclusion
+
+SVA algorithm works well for high dimension data, especially requires $m \geq n$.
