@@ -24,8 +24,8 @@ The $p \times n$ random data matrix $X =(x_1, \dots, x_p)'$ contains $p$ feature
 Assume that $\mathbb{E}[x_i|Y] = b_i S(Y) = b_i S$, where $S$ is a matrix of basis function of primary variables with dimension $d \times n$. Also, assume that the marginal model for each $e_i = x_i - b_i S$ is known or approximated sufficiently. In the matrix form, the model can be written as:
                                         $$X = B S + E$$
 Moreover, we assume the following decomposition:
-                                   $$X = B S + \Gamma G + U $$
-Leek and Storey (2008) showed this decomposition exist in the following sense. Suppose that for each $e_i$, there is no Borel measurable function g such that $e_i = g(e_1, \dots, e_{i - 1}, e_{i + 1}, \dots, e_m)$ almost surely. Then there exist matries $\Gamma_{p \times m } G_{r \times n} (r <= n)$ and $U_{p \times n}$ such that:
+                                   $$X = B S + \Gamma G + U$$
+Leek and Storey (2008) showed this decomposition exist in the following sense. Suppose that for each $e_i$, there is no Borel measurable function g such that $e_i = g(e_1, \dots, e_{i - 1}, e_{i + 1}, \dots, e_m)$ almost surely. Then there exist matries $\Gamma_{p \times r } G_{r \times n} (r <= n)$ and $U_{p \times n}$ such that:
                                         $$X = B S + \Gamma G + U$$
 where the rows of $U$ are jointly independent random vectors so that
 $$\mathbb{P}(u_1, u_2, \dots, u_m) = \mathbb{P}(u_1) \times \mathbb{P}(u_2) \times \dots \times \mathbb{P}(u_m)$$
@@ -48,20 +48,25 @@ The sva algorithm does not attempt to estimate the unmodeled factors $G$. In fac
 
 Say in the previous step, $\hat{K}$ unusally large eigenvalues are identified. For $\lambda_k, k = 1, \cdots, \hat{K}$, take out its corresponding right singular vectors $e_k$. In some sense, $e_k$ can act as surrogate variable $\hat{g}_k$. However, when $\hat{G}$ and $S$ are not orthogonal，$\hat{B}$, the estimation of the effects of $S$, is biased. So are $R$ and $e_k$.
 
-To reduce this bias, next, subset of feasures $X^{(r)}$ which have a strong assosiation with $e_k$ are idtentified. Then refit the model with $X^{r}$ and obtain the residual matrix $R^{r}$. Last, identify the eigenvector $e_{j_k}^{r}$ of $R^{r}$ which has the largest correlation coefficient with $e_k$.
+To reduce this bias, next, subset of feasures $X^{(r)}$ which have a strong assosiation with $e_k$ are idtentified. Then refit the model with $X^{(r)}$ and obtain the residual matrix $R^{(r)}$. Last, identify the eigenvector $e_{j_k}^{(r)}$ of $R^{(r)}$ which has the largest correlation coefficient with $e_k$.
 
 We can choose $e_{j_k}^{r}$ as $\hat{g}_k$ or continue this iteration. This approach can up-weight the features that show strong assotiation with $G$ and down-weight feasures that show strong association with $S$.
 
 ### Apply Surrogate Variable Analysis to Mean Heterogeneity Data
 
-We want to understand whether SVA is robust against mean heterogeneity. Also, we are interested in the distriution of eigenvalues of the heterogeneity data. The SVA is also related to PCA. We want to know how much information about heterogeneity can be captured by PCA as well.
+We want to understand whether SVA is robust against mean heterogeneity. Also, we are interested in the distribution of eigenvalues of the heterogeneity data. The SVA is also related to PCA. We want to know how much information about heterogeneity can be captured by PCA as well.
 
 In our simulation, there are 80 samples. The samples belong to two classes. First 40 samples belong to Class 1 and others belong to Class 2. The samples are collected from two batches: Batch1 and Batch2. 
 
 Each sample has 100 features:
 
 - $X_1$ is the primary variables effects. For Class 1, $X_1 = 4$; for Class 2, $X_1 = -4$.
-- $X_2$ is the batch effects. For Batch 1, $X_2 \sim \mathbb{N}(2, 1)$; for Batch 2, $X_2 \sim \mathbb{N}(-2, 1)$. $\pi_1$ of Class 1 from Batch 1 and $\pi_2$ of Class 2 from Batch 1. The others from Batch 2. Then the propotion of samples from Batch 1 and Batch 2 are $p_1 = \frac{\pi_1 + \pi_2}{2}$ and $p_2 = 1 - p_1$ respectively.
+- $X_2$ is the batch effects. For Batch 1, $X_2 \sim \mathbb{N}(2, 1)$; for Batch 2, $X_2 \sim \mathbb{N}(-2, 1)$
+  + $\pi_1$ of Class 1 from Batch 1 and $\pi_2$ of Class 2 from Batch 1. 
+  + The others from Batch 2. 
+  + The propotion of samples from Batch 1 are $p_1 = \frac{\pi_1 + \pi_2}{2}$ 
+  + The propotion of samples from Batch 2 are $p_2 = 1 - p_1$.
+  
 - $X_3, \dots, X_{100} \sim \mathbb{N}(0, 1)$ are the random noises.
 
 Thus, in the simulation, the heterogeneity lies in a 1-dimension space.
@@ -1219,7 +1224,7 @@ mod20 = model.matrix(~ 1, data = train3.2)
 # estimate the number of latent factors that need to be estimated ---------
 n.sv2 = num.sv(Edata2, mod2, method="be", B = 1000)
 
-print(paste0("The number of surrogate variable: ", n.sv1))
+print(paste0("The number of surrogate variable: ", n.sv2))
 
 if(n.sv2 == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
