@@ -10,28 +10,33 @@ output: html_document
 Data variation dues to different kinds of factors:
 
 - modeled factors (primary variables): e.g. class labels
-- unmodeled factors (batch effects): e.g. age, sex
-- random sampling variation (white noise) : e.g. systematic error
+- unmodeled factors : e.g. batch effects:  age, sex
+- other variation : e.g. white noise, systematic error
 
-In practice, we are interested in the effects of primary variables. For instance, we want to training a model by class labels. However, the effects of primary variables can be blurred by unmodeled factors. Even the data from the same class can be expressed differently, which is also called heterogeneity. 
+In practice, we want to estimate the effects of primary variables as well as discover the unmodeled factors. For instance, we want to training a model by given class labels. However, the effects of primary variables can be blurred by unmodeled factors. Even the data from the same class can have different distributions or a mixture of distribution, which is also called heterogeneity. 
 
-The surrogate variable analysis (SVA) builds up a linear model for data variation and tries to construct surrogate variables to present the batch effects.
+The surrogate variable analysis (SVA) builds up a linear model for data variation and tries to construct surrogate variables to represent the batch effects.
 
 ### Models for data variation
 
-The $m \times n$ random data matrix $X =(x_1, \dots, x_m)'$ contains $m$ features and each feature $x_i$ = $(x_{i1}, \dots, x_{in})'$ has the expression from $n$ samples. The primary variables are $Y = (y_1, \dots, y_n)'$. 
+The $p \times n$ random data matrix $X =(x_1, \dots, x_p)'$ contains $p$ features and each feature $x_i$ = $(x_{i1}, \dots, x_{in})'$ has the expression from $n$ samples. The primary variables are $Y = (y_1, \dots, y_n)'$. 
 
-Assume that $\mathbb{E}[x_i|Y] = b_i S(Y) = b_i S$, where $S$ is the matrix of basis function (primary variables) with dimension $d$. In the matrix form, the model can be written as:
+Assume that $\mathbb{E}[x_i|Y] = b_i S(Y) = b_i S$, where $S$ is a matrix of basis function of primary variables with dimension $d \times n$. Also, assume that the marginal model for each $e_i = x_i - b_i S$ is known or approximated sufficiently. In the matrix form, the model can be written as:
                                         $$X = B S + E$$
-Moreover, we have subsequent decomposion:
-                                        $$E = \Gamma G + U$$
-where $G$ are the unmodeled factors (dependance kernel) with dimension $r$ and $U$ is the random noise. We assume that $d + r < n.$ Leek and Storey (2008) showed that this decomposion exists generally.
+Moreover, we assume the following decomposition:
+                                   $$X = B S + \Gamma G + U $$
+Leek and Storey (2008) showed this decomposition exist in the following sense. Suppose that for each $e_i$, there is no Borel measurable function g such that $e_i = g(e_1, \dots, e_{i - 1}, e_{i + 1}, \dots, e_m)$ almost surely. Then there exist matries $\Gamma_{p \times m } G_{r \times n} (r <= n)$ and $U_{p \times n}$ such that:
+                                        $$X = B S + \Gamma G + U$$
+where the rows of $U$ are jointly independent random vectors so that
+$$\mathbb{P}(u_1, u_2, \dots, u_m) = \mathbb{P}(u_1) \times \mathbb{P}(u_2) \times \dots \times \mathbb{P}(u_m)$$
+Also $\forall i = 1, \dots, m, u_i \neq 0$ and $u_i = h_i(e_i)$ for a non-random Borel measurable function $h_i$. 
+
 
 When the structure of $G$ is unknown, a set of surrogate variables $\hat{G}$ are constructed by SVA algorithm.
 
 ### Detect unmodeled factors
 
-If there are no batch effects, i.e.$G = 0$,  the residu matrix $R = X - \hat{B} S$ should not have unusally large variations in some specific directions. To estimate the dimension $r$ of unmodeled factors, the number of unusally large eigenvalues need to be determined. 
+If there are no batch effects, i.e.$\Gamma = 0$,  the residual matrix $R = X - \hat{B} S$ should not have unusally large variations in some specific directions. To estimate the dimension $r$ of unmodeled factors, the number of unusally large eigenvalues need to be determined. 
 
 In the SVA, an permutation test, a non-parametric approach, is proposed on the residual matrix $R$. It compares the proportion of singular values in $R$ to the proportion of singular values in randomized residual matrices, where each row is permuted individually to break down any structure across rows.
 
@@ -39,7 +44,7 @@ In the SVA, an permutation test, a non-parametric approach, is proposed on the r
 
 The sva algorithm does not attempt to estimate the unmodeled factors $G$. In fact, the sva constructs surrogate variables to represent the variation not caused by primary variables. 
 
-Say in the previous step, $\hat{K}$ unusally large eigenvalues are identified. For $\lambda_k, k = 1, \cdots, \hat{K}$, take out its corresponding right singular vectors $e_k$. In some sense, $e_k$ can act as surrogate variable $\hat{g}_k$. However, when $\hat{G}$ and $S$ are not orthogonal，$\hat{B}$, the estimation of the effects of $S$ is biased and so are $R$ and $e_k$.
+Say in the previous step, $\hat{K}$ unusally large eigenvalues are identified. For $\lambda_k, k = 1, \cdots, \hat{K}$, take out its corresponding right singular vectors $e_k$. In some sense, $e_k$ can act as surrogate variable $\hat{g}_k$. However, when $\hat{G}$ and $S$ are not orthogonal，$\hat{B}$, the estimation of the effects of $S$, is biased. So are $R$ and $e_k$.
 
 To reduce this bias, next, subset of feasures $X^{(r)}$ which have a strong assosiation with $e_k$ are idtentified. Then refit the model with $X^{r}$ and obtain the residual matrix $R^{r}$. Last, identify the eigenvector $e_{j_k}^{r}$ of $R^{r}$ which has the largest correlation coefficient with $e_k$.
 
@@ -53,7 +58,7 @@ The current sva algorithm requires that the data has at least 3 feasures. We con
 Training data are divided into two class:
 
 - Class A: $Y1 \sim (1 - \pi_1) \mathrm{N}\Big( (4, -4, 0)', I_3 \Big) + \pi_1 \mathrm{N}\Big( (4, 4, 0)', I_3 \Big)$, where $\pi_1 \sim \text{Binom}(0.5)$;
-- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (4, -4, 0)', I_3 \Big) + \pi_2 \mathrm{N}\Big( (4, 4, 0)', I_3 \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
+- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (-4, -4, 0)', I_3 \Big) + \pi_2 \mathrm{N}\Big( (-4, 4, 0)', I_3 \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
 
 The plots of data are as following:
 
@@ -101,7 +106,7 @@ The algorithm fails to detect the number of SV.
 Training data are divided into two class:
 
 - Class A: $Y1 \sim (1 - \pi_1) \mathrm{N}\Big( (2, -2, 0, \dots, 0)', I_{10} \Big) + \pi_1 \mathrm{N}\Big( (2, 2, 0, \dots, 0)', I_{10} \Big)$, where $\pi_1 \sim \text{Binom}(0.5)$;
-- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (2, -2, 0, \dots, 0)', I_{10} \Big) + \pi_2 \mathrm{N}\Big( (2, 2, 0, \dots, 0)', I_{10} \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
+- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (-2, -2, 0, \dots, 0)', I_{10} \Big) + \pi_2 \mathrm{N}\Big( (-2, 2, 0, \dots, 0)', I_{10} \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
 
 The plots of data are as following:
 
@@ -147,7 +152,7 @@ The algorithm fails to detect the heterogeneity.
 Training data are divided into two class:
 
 - Class A: $Y1 \sim (1 - \pi_1) \mathrm{N}\Big( (2, -2, 0, \dots, 0)', I_{100} \Big) + \pi_1 \mathrm{N}\Big( (2, 2, 0, \dots, 0)', I_{100} \Big)$, where $\pi_1 \sim \text{Binom}(0.5)$;
-- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (2, -2, 0, \dots, 0)', I_{100} \Big) + \pi_2 \mathrm{N}\Big( (2, 2, 0, \dots, 0)', I_{100} \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
+- Class B: $Y2 \sim (1 - \pi_2) \mathrm{N}\Big( (-2, -2, 0, \dots, 0)', I_{100} \Big) + \pi_2 \mathrm{N}\Big( (-2, 2, 0, \dots, 0)', I_{100} \Big)$, where $\pi_2 \sim \text{Binom}(0.5)$.
 
 The plots of data are as following:
 
@@ -191,7 +196,72 @@ mod0_100d = model.matrix(~ 1, data = train100d)
 # estimate the number of latent factors that need to be estimated ---------
 n.sv_be_100d = num.sv(Edata100d,mod_100d,method="be")
 print(n.sv_be_100d)
+
 ```
+Then we want to see the details of detecting the surrogate variables. Especially, we want to understand the scree plot in each permuation residual matrix.
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+
+library(dplyr)
+library(ggplot2)
+source("/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/getPcaResult.R")
+M <- train100d %>% select(-y, -batch)
+# Expression data
+Edata = t(M)
+colnames(Edata) = paste0("sample", c(1: dim(Edata)[2]))
+Mdata = melt(Edata)
+
+# primary variable of interest
+Y <- train100d %>% select(y)
+
+# generate the basis matrix -----------------------------------------------
+
+## full model 
+mod = model.matrix(~ y, data = train100d)
+## null model
+mod0 = model.matrix(~ 1, data = train100d)
+
+HatB = Edata %*% mod %*% solve(t(mod) %*% mod) 
+R = Edata - HatB %*% t(mod)
+
+R.pc = getPcaResult(R, varNames = colnames(R))
+R.pv =  data.frame(Var1 = "Origin", Var2 = rownames(R), value = R.pc$varDf[,2])
+# use permutation test to find the unusual large eigenvalues --------------
+B = 1000
+pvMat = matrix(nrow = B, ncol = dim(R)[1])
+tempR = R
+for(k in 1:B){
+  # make permutation of each row independently
+  newE = matrix(nrow = dim(R)[1],ncol = dim(R)[2])
+  for(i in 1:dim(R)[1]){
+    rank = sample(dim(R)[2])
+    newE[i,1:dim(R)[2]] = tempR[i,rank]
+  }
+  # refit the model to get the new residual matrix
+  newR = newE - newE %*% mod %*% solve(t(mod) %*% mod) %*% t(mod)
+  
+  # do pca on newR and take out the proprotion variance vector
+  newR.pc = getPcaResult(newR, varNames = colnames(newR))
+  pvMat[k, 1:dim(R)[1]] = newR.pc$varDf[,2]
+  temoR = newR
+}
+
+colnames(pvMat) = rownames(R)
+rownames(pvMat) = paste0("Run", 1:B)
+
+EpvMat = melt(pvMat)
+
+gg1 = ggplot(data = EpvMat, aes(x = Var2, y = value)) + 
+  geom_boxplot(col = "blue") +
+  geom_point(data = R.pv, aes(x = Var2, y = value), col = "red")
+
+gg2 = ggplot(data = EpvMat, aes(x = Var2, y = value, group = Var1)) + 
+  geom_line(col = "blue") +
+  geom_line(data = R.pv, aes(x = Var2, y = value), col = "red") +
+  geom_point(data = R.pv, aes(x = Var2, y = value), col = "red", size = 2)
+print(gg1)
+print(gg2)
+```
+
 
 Next we construct SV.
 ```{r, echo = FALSE, warning=FALSE, message = FALSE}
@@ -219,6 +289,331 @@ g5.2 = ggplot(Mdb100d.0, aes(x = Var2, y = Var1, fill = value)) +
 print(g5.2)
 ```
 
-### Conclusion
+##### Scale different mixture batch effects
+There are 80 samples. The samples belong to two classes. First 40 samples belong to Class 1 and others belong to Class 2. The samples are collected from two Batches. Batch 1 contains Sample 1 to Sample 20 and Sample 41 to Sample 60. Other samples come from Batch 2.
 
-SVA algorithm works well for high dimension data, especially requires $m \geq n$.
+Each sample has 100 features.
+- $X_1$ is the primary variables. For Class 1, $X_1 = 2$; for Class 2, $X_1 = -2$.
+- $X_2$ is the batch effects. For Batch 1, $X_2 \sim \mathrm{N}(0, 0.1)$; for Batch 2, $X_2 \sim \mathrm{N}(0, 2)$.
+- $X_3, \dots, X_100$ is the random noise.
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+load("/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/rdata/scaleToyexample.RData")
+M <- train %>% select(-y, -batch)
+# Expression data
+Edata = t(M)
+Mdata = melt(Edata)
+
+g6 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g6)
+
+Mdata.0 = melt(Edata[1:10, ])
+g6.0 = ggplot(Mdata.0, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g6.0)
+```
+
+Then, we apply sva algorithm to detect the number of surrogate variables.
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(sva)
+# make model matrix -------------------------------------------------------
+## full model 
+mod = model.matrix(~ y, data = train)
+## null model
+mod0 = model.matrix(~ 1, data = train)
+
+# estimate the number of latent factors that need to be estimated ---------
+n.sv_be = num.sv(Edata,mod,method="be")
+print(n.sv_be)
+n.sv_leek = num.sv(Edata,mod,method="leek")
+print(n.sv_leek)
+```
+
+The SVA fails to detect the unmodeled factor. However, I can still try to construct the SV by setting the number of SV as 1 mannually.
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(ggplot2)
+library(reshape2)
+library(sva)
+# estimate the surrogate variables
+svobj = sva(Edata,mod,mod0,n.sv= 1, B = 5)
+fsvobj = fsva(Edata, mod, svobj, Edata)
+
+# get the data adjusted by the sv
+Edb = fsvobj$db
+Mdb = melt(Edb)
+g6.1 = ggplot(Mdb, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = "1 Surrogate Variables") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g6.1)
+
+Mdb.0 = melt(Edb[1:10,])
+g6.2 = ggplot(Mdb.0, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = "1 Surrogate Variables") +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(g6.2)
+```
+
+#### Unbalanced Batch Effect
+In these simulations, there are 80 samples. The samples belong to two classes. First 40 samples belong to Class 1 and others belong to Class 2. The samples are collected from two batches. But the propotion of samples in Class 1 from Batch 1 is different with the propotionof samples in Class 2 from Batch 1.
+
+##### Mean Heterogeneity Batch Effect
+
+Each sample has 100 features:
+
+- $X_1$ is the primary variables. For Class 1, $X_1 = 2$; for Class 2, $X_1 = -2$.
+- $X_2$ is the batch effects. For Batch 1, $X_2 \sim \mathrm{N}(2, 1)$; for Batch 2, $X_2 \sim \mathrm{N}(-2, 1)$. $\pi_1$ of Class 1 from Batch 1 and $\pi_2$ of Class 2 from Batch 1. The others from Batch 2.
+- $X_3, \dots, X_100$ is the random noise.
+
+We do simulation for three sets of $\pi_1$ and $\pi_2$:
+
+- $\pi_1 = 0.7, \pi_2 = 0.2$. In this case, the samples from Batch 1 and Batch 2 are different.
+- $\pi_1 = 0.33, \pi_2 = 0.67$.
+- $\pi_1 = 0.9, \pi_2 = 0.1$.
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(sva)
+library(reshape2)
+library(gridExtra)
+# load the data and functions
+load("/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/rdata/unbalanced_mean_hetero_example.RData")
+source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/pcaScreePlot.R')
+source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/getPcaResult.R')
+
+# data processing
+M1 <- train %>% select(-y, -batch)
+M2 <- train2%>% select(-y, -batch)
+M3 <- train3%>% select(-y, -batch)
+## Expression data
+Edata1 = t(M1)
+colnames(Edata1) = paste0("sample", c(1: dim(Edata1)[2]))
+Mdata1 = melt(Edata1)
+
+Edata2 = t(M2)
+colnames(Edata2) = paste0("sample", c(1: dim(Edata2)[2]))
+Mdata2 = melt(Edata2)
+
+Edata3 = t(M3)
+colnames(Edata3) = paste0("sample", c(1: dim(Edata3)[2]))
+Mdata3 = melt(Edata3)
+
+Y <- train %>% select(y)
+
+# make model matrix -------------------------------------------------------
+## full model 
+mod = model.matrix(~ y, data = train)
+## null model
+mod0 = model.matrix(~ 1, data = train)
+
+
+# estimate the number of latent factors that need to be estimated ---------
+n.sv1 = num.sv(Edata1,mod,method="be")
+n.sv2 = num.sv(Edata2,mod,method="be")
+n.sv3 = num.sv(Edata3,mod,method="be")
+
+print(paste0("n.sv1 = ",n.sv1,". Fail to find out the batch effect."))
+print(paste0("n.sv2 = ",n.sv2,". Fail to Find out the batch effect."))
+print(paste0("n.sv3 = ",n.sv3,". Fail to find out the batch effect."))
+# it fails to estimate the number of surogate variable
+
+print("Manually set the number of surrogate variable as 1 and apply sva to remove the effects of surrogate variable.")
+# estimate the surrogate variables
+svobj1 = sva(t(M1),mod,mod0,n.sv= 1, B = 5)
+svobj2 = sva(t(M2),mod,mod0,n.sv= 1, B = 5)
+svobj3 = sva(t(M3),mod,mod0,n.sv= 1, B = 5)
+
+# Remove the batch effects
+fsvobj1 = fsva(Edata1, mod, svobj1, Edata1)
+fsvobj2 = fsva(Edata2, mod, svobj2, Edata2)
+fsvobj3 = fsva(Edata3, mod, svobj3, Edata3)
+
+Edb1 = fsvobj1$db
+Edb2 = fsvobj2$db
+Edb3 = fsvobj3$db
+
+trainSV1 <- data.frame(Y, t(Edb1), batch = train$batch)
+trainSV2 <- data.frame(Y, t(Edb2), batch = train2$batch)
+trainSV3 <- data.frame(Y, t(Edb3), batch = train3$batch)
+
+gg1 = ggplot(data = train, aes(x = as.factor(batch), y = X2)) + 
+  geom_boxplot() +
+    ylim(-5, 5) + 
+  labs(title = 'Before adjusting \n
+pi_1 = 0.7, pi_2 = 0.2', x = "Batch")
+
+gg2 = ggplot(data = train2, aes(x = as.factor(batch), y = X2)) + 
+  geom_boxplot() +
+  ylim(-5, 5) + 
+  labs(title = 'Before adjusting \n
+pi_1 = 0.33, pi_2 = 0.67', x = "Batch")
+
+gg3 = ggplot(data = train3, aes(x = as.factor(batch), y = X2)) + 
+  geom_boxplot() +
+  ylim(-5, 5) + 
+  labs(title = 'Before adjusting \n
+pi_1 = 0.9, pi_2 = 0.1', x = "Batch")
+
+grid.arrange(gg1,gg2,gg3, nrow = 1, ncol = 3)
+
+gg4 = ggplot(data = trainSV1, aes(x = as.factor(batch), y = X2)) + 
+  geom_boxplot() +
+  ylim(-5, 5) + 
+  labs(title = 'After adjusting  \n
+pi_1 = 0.7, pi_2 = 0.2', x = "Batch")
+
+gg5 = ggplot(data = trainSV2, aes(x = as.factor(batch), y = X2)) + 
+  geom_boxplot() +
+  ylim(-5, 5) + 
+  labs(title = 'After adjusting  \n
+pi_1 = 0.33, pi_2 = 0.67', x = "Batch")
+
+gg6 = ggplot(data = trainSV3, aes(x = as.factor(batch), y = X2)) + 
+  geom_boxplot() +
+  ylim(-5, 5) + 
+  labs(title = 'After adjusting  \n
+pi_1 = 0.9, pi_2 = 0.1', x = "Batch")
+
+grid.arrange(gg4,gg5,gg6, nrow = 1, ncol = 3)
+
+# dig into the analysis ---------------------------------------------------
+print("Analysis of detecting the surgoate variables")
+# estimate the coefficient of basis matrix
+R1 = Edata1 - Edata1 %*% mod %*% solve(t(mod) %*% mod)  %*% t(mod)
+R2 = Edata2 - Edata2 %*% mod %*% solve(t(mod) %*% mod)  %*% t(mod)
+R3 = Edata3 - Edata3 %*% mod %*% solve(t(mod) %*% mod)  %*% t(mod)
+
+R.pc1 = getPcaResult(R1, varNames = colnames(R1))
+R.pc2 = getPcaResult(R2, varNames = colnames(R2))
+R.pc3 = getPcaResult(R3, varNames = colnames(R3))
+
+R.pv1 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc1$varDf), value = R.pc1$varDf[,2])
+R.pv2 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc2$varDf), value = R.pc2$varDf[,2])
+R.pv3 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc3$varDf), value = R.pc3$varDf[,2])
+
+# use permutation test to find the unusual large eigenvalues --------------
+B = 1000
+pvMat1 = matrix(nrow = B, ncol = dim(R.pc1$varDf)[1])
+pvMat2 = matrix(nrow = B, ncol = dim(R.pc2$varDf)[1])
+pvMat3 = matrix(nrow = B, ncol = dim(R.pc3$varDf)[1])
+
+tempR = R1
+for(k in 1:B){
+  # make permutation of each row independently
+  newE = matrix(nrow = dim(R.pc1$varDf)[1],ncol = dim(R1)[2])
+  for(i in 1:dim(R.pc1$varDf)[1]){
+    rank = sample(dim(R1)[2])
+    newE[i,1:dim(R1)[2]] = tempR[i,rank]
+  }
+  # refit the model to get the new residual matrix
+  newR = newE - newE %*% mod %*% solve(t(mod) %*% mod) %*% t(mod)
+  
+  # do pca on newR and take out the proprotion variance vector
+  newR.pc = getPcaResult(newR, varNames = colnames(newR))
+  pvMat1[k, 1:dim(R.pc1$varDf)[1]] = newR.pc$varDf[,2]
+  tempR = newR
+}
+
+tempR = R2
+for(k in 1:B){
+  # make permutation of each row independently
+  newE = matrix(nrow = dim(R.pc2$varDf)[1],ncol = dim(R2)[2])
+  for(i in 1:dim(R.pc2$varDf)[1]){
+    rank = sample(dim(R2)[2])
+    newE[i,1:dim(R2)[2]] = tempR[i,rank]
+  }
+  # refit the model to get the new residual matrix
+  newR = newE - newE %*% mod %*% solve(t(mod) %*% mod) %*% t(mod)
+  
+  # do pca on newR and take out the proprotion variance vector
+  newR.pc = getPcaResult(newR, varNames = colnames(newR))
+  pvMat2[k, 1:dim(R.pc2$varDf)[1]] = newR.pc$varDf[,2]
+  tempR = newR
+}
+
+tempR = R3
+for(k in 1:B){
+  # make permutation of each row independently
+  newE = matrix(nrow = dim(R.pc3$varDf)[1],ncol = dim(R3)[2])
+  for(i in 1:dim(R.pc1$varDf)[1]){
+    rank = sample(dim(R3)[2])
+    newE[i,1:dim(R3)[2]] = tempR[i,rank]
+  }
+  # refit the model to get the new residual matrix
+  newR = newE - newE %*% mod %*% solve(t(mod) %*% mod) %*% t(mod)
+  
+  # do pca on newR and take out the proprotion variance vector
+  newR.pc = getPcaResult(newR, varNames = colnames(newR))
+  pvMat3[k, 1:dim(R.pc3$varDf)[1]] = newR.pc$varDf[,2]
+  tempR = newR
+}
+
+colnames(pvMat1) = rownames(R.pc1$varDf)
+rownames(pvMat1) = paste0("Run", 1:B)
+colnames(pvMat2) = rownames(R.pc2$varDf)
+rownames(pvMat2) = paste0("Run", 1:B)
+colnames(pvMat3) = rownames(R.pc3$varDf)
+rownames(pvMat3) = paste0("Run", 1:B)
+
+EpvMat1 = melt(pvMat1)
+pv_stat1 = EpvMat1 %>% 
+  group_by(Var2) %>%
+  summarise(Median = median(value), Q975 = quantile(value, .975), Q025 = quantile(value, .025))
+
+EpvMat2 = melt(pvMat2)
+pv_stat2 = EpvMat2 %>% 
+  group_by(Var2) %>%
+  summarise(Median = median(value), Q975 = quantile(value, .975), Q025 = quantile(value, .025)) 
+
+EpvMat3 = melt(pvMat3)
+pv_stat3 = EpvMat3 %>% 
+  group_by(Var2) %>%
+  summarise(Median = median(value), Q975 = quantile(value, .975), Q025 = quantile(value, .025)) 
+
+gg7 = ggplot(data = pv_stat1, aes(x = Var2, y = Median) )+ 
+  geom_point(col = "blue") +
+  geom_errorbar(aes(ymax = Q975, ymin = Q025)) + 
+  geom_point(data = R.pv1, aes(x = Var2, y = value), col = "red")
+
+gg8 = ggplot(data = EpvMat1, aes(x = Var2, y = value, group = Var1)) + 
+  geom_line(col = "blue") +
+  geom_line(data = R.pv1, aes(x = Var2, y = value), col = "red") +
+  geom_point(data = R.pv1, aes(x = Var2, y = value), col = "red", size = 2)
+
+grid.arrange(gg7,gg8, nrow = 1, ncol = 2)
+
+gg9 = ggplot(data = pv_stat2, aes(x = Var2, y = Median) )+ 
+  geom_point(col = "blue") +
+  geom_errorbar(aes(ymax = Q975, ymin = Q025)) + 
+  geom_point(data = R.pv2, aes(x = Var2, y = value), col = "red")
+
+gg10 = ggplot(data = EpvMat2, aes(x = Var2, y = value, group = Var1)) + 
+  geom_line(col = "blue") +
+  geom_line(data = R.pv2, aes(x = Var2, y = value), col = "red") +
+  geom_point(data = R.pv2, aes(x = Var2, y = value), col = "red", size = 2)
+
+grid.arrange(gg9, gg10, nrow = 1, ncol = 2)
+
+gg11 = ggplot(data = pv_stat3, aes(x = Var2, y = Median) )+ 
+  geom_point(col = "blue") +
+  geom_errorbar(aes(ymax = Q975, ymin = Q025)) + 
+  geom_point(data = R.pv3, aes(x = Var2, y = value), col = "red")
+
+gg12 = ggplot(data = EpvMat3, aes(x = Var2, y = value, group = Var1)) + 
+  geom_line(col = "blue") +
+  geom_line(data = R.pv3, aes(x = Var2, y = value), col = "red") +
+  geom_point(data = R.pv3, aes(x = Var2, y = value), col = "red", size = 2)
+
+grid.arrange(gg11, gg12, nrow = 1, ncol = 2)
+
+```

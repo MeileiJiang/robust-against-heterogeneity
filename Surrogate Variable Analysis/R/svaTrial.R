@@ -42,20 +42,20 @@ n.sv = num.sv(Edata,mod,method="be")
 svobj = sva(t(M),mod,mod0,n.sv= 1, B = 2)
 
 
-# adjusting for surrogate variables
-pValues = f.pvalue(Edata,mod,mod0)
-qValues = p.adjust(pValues,method="BH")
-which(qValues < 0.05)
-# 1
-  
-
-modSv = cbind(mod,svobj$sv)
-mod0Sv = cbind(mod0,svobj$sv)
-pValuesSv = f.pvalue(Edata,modSv,mod0Sv)
-qValuesSv = p.adjust(pValuesSv,method="BH")
-which(qValuesSv < 0.05)
-# [1] 1 
- 
+# # adjusting for surrogate variables
+# pValues = f.pvalue(Edata,mod,mod0)
+# qValues = p.adjust(pValues,method="BH")
+# which(qValues < 0.05)
+# # 1
+#   
+# 
+# modSv = cbind(mod,svobj$sv)
+# mod0Sv = cbind(mod0,svobj$sv)
+# pValuesSv = f.pvalue(Edata,modSv,mod0Sv)
+# qValuesSv = p.adjust(pValuesSv,method="BH")
+# which(qValuesSv < 0.05)
+# # [1] 1 
+#  
 
 # Remove the batch effects
 fsvobj = fsva(Edata, mod, svobj, Edata)
