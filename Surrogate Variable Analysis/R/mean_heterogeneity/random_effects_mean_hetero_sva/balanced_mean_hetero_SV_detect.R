@@ -12,7 +12,7 @@ library(reshape2)
 
 # data processing ---------------------------------------------------------
 
-load("rdata/mean_hetero_example.RData")
+load("rdata/random_effects_mean_hetero_example.RData")
 source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/pcaScreePlot.R')
 source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/getPcaResult.R')
 
@@ -42,7 +42,7 @@ mod0 = model.matrix(~ 1, data = train0)
 
 
 # estimate the number of latent factors that need to be estimated ---------
-n.sv = num.sv(Edata,mod,method="be", B = 1000)
+n.sv = num.sv(Edata,mod,method="leek", B = 1000)
 
 print(paste0("The number of surrogate variable: ", n.sv))
 
@@ -109,7 +109,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc$varDf)
