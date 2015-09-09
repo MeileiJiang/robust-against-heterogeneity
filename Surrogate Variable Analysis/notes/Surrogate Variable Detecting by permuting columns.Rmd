@@ -8,7 +8,9 @@ output: html_document
 
 ## Review of Surrogate Variable Analysis on mean heterogeneity data
 
-In the previous document, we apply Surrogate Variable Analysis on the mean heterogeneity data. In our toy examples, there are 80 samples. The samples belong to two classes. First 40 samples belong to Class 1 and others belong to Class 2. The samples are collected from two batches: Batch1 and Batch2. 
+In the previous document, we apply Surrogate Variable Analysis on the mean heterogeneity data. In our toy examples, there are 80 samples with 100 features, which is a high dimension and low sample size setting. 
+
+The samples belong to two classes. First 40 samples belong to Class 1 and others belong to Class 2. The samples are collected from two batches: Batch1 and Batch2. 
 
 Each sample has 100 features:
 
@@ -23,7 +25,14 @@ Each sample has 100 features:
 
 $R$ is the residual matrix gained by regressing the data matrix $X$ from the primary variable (class label vector) $Y$. Since the primary variables effects are constant, $X_1$ in the residual matrix are 0. Then the situation is equivalent to detect the mean heterogeneity from the Gaussian random noise matrix. 
 
+
+In the sva package, it provides two approaches to detect the surrogate variable:
+
+1. Permutation test based on algorithm proposed by Bujia and Eyuboglu 1992.
+2. Asymptotic approach proposed by Leek 2011.
+
 The simulation results indicate that SVA performs poorly on detecting the surrogate variable in our toy examples. The major problem in their algorithm is that they form the new matrix $R^{*}$ by pemuting each row of $R$ independently to remove any structure in the matrix. However, this operation can not indeed break down the Gaussian mixture structure. In fact, in the $R$, $X_3 \dots X_100$ are Gaussian random noises which are spherical symmetric. Then permuting within these rows will not change the structure of matrix. Permuting $X_2$ will also preserve the Gaussian Mixture structure. Therefore, after permuting the matrix within each row independently, the whole matrix still has a Gaussian mixture.
+
 In our toy examples, a more efficent way to detect the surrogate variable is permuting each columns independently. 
 
 ## Simulation Study
@@ -72,8 +81,11 @@ mod0 = model.matrix(~ 1, data = train4)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv0 = num.sv(Edata,mod,method="leek")
+print(paste0("The number of surrogate variable by asymptotic approach: ", n.sv0))
 n.sv = num.sv(Edata,mod,method="be", B = 1000)
-print(paste0("The number of surrogate variable: ", n.sv))
+print(paste0("The number of surrogate variable by permutation test: ", n.sv))
+
 
 if(n.sv == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
@@ -128,6 +140,12 @@ source('/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate 
 HatB = Edata %*% mod %*% solve(t(mod) %*% mod) 
 R = Edata - HatB %*% t(mod)
 
+MR = melt(R)
+ggplot(MR, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = "Residual Matrix") +
+  geom_tile() + 
+  scale_fill_gradient2()
+
 R.pc = getPcaResult(R, varNames = colnames(R), scale=F, center = F)
 
 R.pv =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc$varDf), value = R.pc$varDf[,2])
@@ -147,7 +165,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc$varDf)
@@ -162,13 +179,15 @@ ggplot(data = pv_stat, aes(x = Var2, y = Median) )+
   geom_point(col = "blue") +
   geom_errorbar(aes(ymax = Q950, ymin = Q000)) + 
   geom_point(data = R.pv, aes(x = Var2, y = value), col = "red") +
-  ylim(0, 0.08)
+  ylim(0, 0.08) +
+  labs(x = "PC", y = "Proportion of Variance", title = "Boxplot of Variance for PCs \n Permuting within columns")
 
 ggplot(data = EpvMat, aes(x = Var2, y = value, group = Var1)) + 
   geom_line(col = "blue") +
   geom_line(data = R.pv, aes(x = Var2, y = value), col = "red") +
   geom_point(data = R.pv, aes(x = Var2, y = value), col = "red", size = 2) +
-  ylim(0, 0.08)
+  ylim(0, 0.08) +
+  labs(x = "PC", y = "Proportion of Variance", title = "Scree plot of Variance for PCs \n Permuting within columns")
 
 # Analysis of the angle between eigenvector and batch vector
 
@@ -176,16 +195,15 @@ bv = as.numeric(unlist(train4 %>% select(batch)))
 y = as.numeric(unlist(Y))
 
 R.dir = R.pc$dirDf
-R.cor = data.frame(PC = colnames(R.dir), angle = acos(cor(R.dir, y))/pi * 180 )
+R.cor = data.frame(PC = colnames(R.dir), angle = acos(abs(cor(R.dir, y)))/pi * 180 )
 
 
 ggplot(data = R.cor, aes(x = PC, y = angle))+ 
   geom_point() + 
   geom_hline(yintercep = acos(cor(svobj$sv, y))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
   labs(x = "PC", y = "Angle", 
        title = "Angle between PCs and Primary Variable Effect \n blue dashed line: angle(SV, Primary Variable Effect)") + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 15))
 
 ```
 
@@ -233,9 +251,13 @@ mod0 = model.matrix(~ 1, data = train0)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv0 = num.sv(Edata,mod,method="leek")
+
+print(paste0("The number of surrogate variable by asymptotic approach: ", n.sv0))
+
 n.sv = num.sv(Edata,mod,method="be", B = 1000)
 
-print(paste0("The number of surrogate variable: ", n.sv))
+print(paste0("The number of surrogate variable by permutation test: ", n.sv))
 
 if(n.sv == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
@@ -295,6 +317,12 @@ source('/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate 
 HatB = Edata %*% mod %*% solve(t(mod) %*% mod) 
 R = Edata - HatB %*% t(mod)
 
+MR = melt(R)
+ggplot(MR, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = "Residual Matrix") +
+  geom_tile() + 
+  scale_fill_gradient2()
+
 R.pc = getPcaResult(R, varNames = colnames(R), scale=F, center = F)
 
 R.pv =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc$varDf), value = R.pc$varDf[,2])
@@ -314,7 +342,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc$varDf)
@@ -329,13 +356,15 @@ ggplot(data = pv_stat, aes(x = Var2, y = Median) )+
   geom_point(col = "blue") +
   geom_errorbar(aes(ymax = Q950, ymin = Q000)) + 
   geom_point(data = R.pv, aes(x = Var2, y = value), col = "red") +
-  ylim(0, 0.08)
+  ylim(0, 0.08) +
+  labs(x = "PC", y = "Proportion of Variance", title = "Boxplot of Variance for PCs \n Permuting within columns")
 
 ggplot(data = EpvMat, aes(x = Var2, y = value, group = Var1)) + 
   geom_line(col = "blue") +
   geom_line(data = R.pv, aes(x = Var2, y = value), col = "red") +
   geom_point(data = R.pv, aes(x = Var2, y = value), col = "red", size = 2) +
-  ylim(0, 0.08)
+  ylim(0, 0.08) +
+  labs(x = "PC", y = "Proportion of Variance", title = "Scree Plot of Variance for PCs \n Permuting within columns")
 
 # Analysis of the angle between eigenvector and batch vector
 
@@ -343,17 +372,13 @@ bv = as.numeric(unlist(train0 %>% select(batch)))
 y = as.numeric(unlist(Y))
 
 R.dir = R.pc$dirDf
-R.cor = data.frame(PC = colnames(R.dir), angle = acos(cor(R.dir, bv))/pi * 180 )
-
+R.cor = data.frame(PC = colnames(R.dir), angle = acos(abs(cor(R.dir, bv)))/pi * 180 )
 
 ggplot(data = R.cor, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(cor(svobj$sv, bv))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
-  labs(x = "PC", y = "Angle", 
-       title = "Angle between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect)") + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
-
+  geom_hline(yintercep = acos(abs(cor(svobj$sv, bv)))/pi * 180, col = "blue", linetype = "dashed") +
+  labs(x = "PC", y = "Angle", title =paste0("Angles between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect) \n pi_1 = ", pi_1, ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)) + 
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 15))
 ```
 
 #### Unbalanced Mean Heterogeneity Data
@@ -400,12 +425,15 @@ title_ubg4.1 <- paste0("Batch effects of two batches \n pi_1 = ", pi_1,
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg5.1 = paste0("Simulation data after ajustment \n pi_1 = ", pi_1, 
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg6.1 = paste0("Eigenvalues Boxplot \n pi_1 = ", pi_1, 
+title_ubg6.1 = paste0("Eigenvalues Boxplot \n Permuting within columns \n pi_1 = ", pi_1, 
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg7.1 = paste0("Screeplot \n pi_1 = ", pi_1, 
+title_ubg7.1 = paste0("Screeplot \n Permuting within columns \n pi_1 = ", pi_1, 
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg8.1 = paste0("Angles between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect) \n pi_1 = ", pi_1, 
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg9.1 = paste0("Residual Matrix \n pi_1 = ", pi_1, 
+                      ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+
 
 ubg1.1 = ggplot(Mdata1, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value", title = title_ubg1.1) +
@@ -432,12 +460,16 @@ title_ubg4.2 <- paste0("Batch effects of two batches \n pi_1 = ", pi_1,
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg5.2 = paste0("Simulation data after ajustment \n pi_1 = ", pi_1, 
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg6.2 = paste0("Eigenvalues Boxplot \n pi_1 = ", pi_1, 
+title_ubg6.2 = paste0("Eigenvalues Boxplot \n Permuting within columns \n pi_1 = ", pi_1, 
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg7.2 = paste0("Screeplot \n pi_1 = ", pi_1, 
+title_ubg7.2 = paste0("Screeplot \n Permuting within columns \n pi_1 = ", pi_1, 
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg8.2 = paste0("Angles between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect) \n pi_1 = ", pi_1, 
               ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg9.2 = paste0("Residual Matrix \n pi_1 = ", pi_1, 
+                      ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+
+
 ubg1.2 = ggplot(Mdata2, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value", title = title_ubg1.2) +
   geom_tile() + 
@@ -458,9 +490,13 @@ mod10 = model.matrix(~ 1, data = train1.1)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv10 = num.sv(Edata1,mod1,method="leek")
+
+print(paste0("The number of surrogate variable by asymptotic approach: ", n.sv10))
+
 n.sv1 = num.sv(Edata1, mod1, method="be", B = 1000)
 
-print(paste0("The number of surrogate variable: ", n.sv1))
+print(paste0("The number of surrogate variable by permutation test: ", n.sv1))
 
 if(n.sv1 == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
@@ -512,9 +548,13 @@ mod20 = model.matrix(~ 1, data = train1.2)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv20 = num.sv(Edata2,mod2,method="leek")
+
+print(paste0("The number of surrogate variable by asymptotic approach: ", n.sv20))
+
 n.sv2 = num.sv(Edata2, mod2, method="be", B = 1000)
 
-print(paste0("The number of surrogate variable: ", n.sv1))
+print(paste0("The number of surrogate variable by permutation test: ", n.sv1))
 
 if(n.sv2 == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
@@ -577,6 +617,13 @@ source('/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate 
 HatB1 = Edata1 %*% mod1 %*% solve(t(mod1) %*% mod1) 
 R1 = Edata1 - HatB1 %*% t(mod1)
 
+MR1 = melt(R1)
+ubg9.1 = ggplot(MR1, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg9.1) +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(ubg9.1)
+
 R.pc1 = getPcaResult(R1, varNames = colnames(R1), scale=F, center = F)
 
 R.pv1 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc1$varDf), value = R.pc1$varDf[,2])
@@ -595,7 +642,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc1$varDf)
@@ -626,21 +672,25 @@ bv1 = as.numeric(unlist(train1.1 %>% select(batch)))
 y1 = as.numeric(unlist(Y1))
 
 R.dir1 = R.pc1$dirDf
-R.cor1 = data.frame(PC = colnames(R.dir1), angle = acos(cor(R.dir1, bv1))/pi * 180 )
+R.cor1 = data.frame(PC = colnames(R.dir1), angle = acos(abs(cor(R.dir1, bv1)))/pi * 180 )
 
 ubg8.1 = ggplot(data = R.cor1, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(cor(svobj1$sv, bv1))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
-  labs(x = "PC", y = "Angle",  title = title_ubg8.1) + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
+  geom_hline(yintercep = acos(abs(cor(svobj1$sv, bv1)))/pi * 180, col = "blue", linetype = "dashed") +
+  labs(x = "PC", y = "Angle", title = title_ubg8.1) + 
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 15))
 
 # analysis second data set -------------------------------------------------
 
 # estimate the coefficient of basis matrix
 HatB2 = Edata2 %*% mod2 %*% solve(t(mod2) %*% mod2) 
 R2 = Edata2 - HatB2 %*% t(mod2)
-
+MR2 = melt(R2)
+ubg9.2 = ggplot(MR2, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg9.2) +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(ubg9.2)
 R.pc2 = getPcaResult(R2, varNames = colnames(R2), scale=F, center = F)
 
 R.pv2 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc2$varDf), value = R.pc2$varDf[,2])
@@ -660,7 +710,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), center = F, scale = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc2$varDf)
@@ -691,14 +740,13 @@ bv2 = as.numeric(unlist(train1.2 %>% select(batch)))
 y2 = as.numeric(unlist(Y2))
 
 R.dir2 = R.pc2$dirDf
-R.cor2 = data.frame(PC = colnames(R.dir2), angle = acos(cor(R.dir2, bv2))/pi * 180 )
+R.cor2 = data.frame(PC = colnames(R.dir2), angle = acos(abs(cor(R.dir2, bv2)))/pi * 180 )
 
 ubg8.2 = ggplot(data = R.cor2, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(cor(svobj2$sv, bv2))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
+  geom_hline(yintercep = acos(abs(cor(svobj2$sv, bv2)))/pi * 180, col = "blue", linetype = "dashed") +
   labs(x = "PC", y = "Angle", title = title_ubg8.2) + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 15))
 
 # print the figures
 
@@ -748,11 +796,13 @@ title_ubg4.1 <- paste0("Batch effects of two batches \n pi_1 = ", pi_1,
                        ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg5.1 = paste0("Simulation data after ajustment \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg6.1 = paste0("Eigenvalues Boxplot \n pi_1 = ", pi_1, 
+title_ubg6.1 = paste0("Eigenvalues Boxplot \n Permuting within columns \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg7.1 = paste0("Screeplot \n pi_1 = ", pi_1, 
+title_ubg7.1 = paste0("Screeplot \n Permuting within columns \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg8.1 = paste0("Angles between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect) \n pi_1 = ", pi_1, 
+                      ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg9.1 = paste0("Residual Matrix \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 
 ubg1.1 = ggplot(Mdata1, aes(x = Var2, y = Var1, fill = value)) +
@@ -780,12 +830,15 @@ title_ubg4.2 <- paste0("Batch effects of two batches \n pi_1 = ", pi_1,
                        ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg5.2 = paste0("Simulation data after ajustment \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg6.2 = paste0("Eigenvalues Boxplot \n pi_1 = ", pi_1, 
+title_ubg6.2 = paste0("Eigenvalues Boxplot \n Permuting within columns \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg7.2 = paste0("Screeplot \n pi_1 = ", pi_1, 
+title_ubg7.2 = paste0("Screeplot \n Permuting within columns \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg8.2 = paste0("Angles between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect) \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg9.2 = paste0("Residual Matrix \n pi_1 = ", pi_1, 
+                      ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+
 ubg1.2 = ggplot(Mdata2, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene",  fill = "Value", title = title_ubg1.2) +
   geom_tile() + 
@@ -806,9 +859,13 @@ mod10 = model.matrix(~ 1, data = train2.1)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv10 = num.sv(Edata1,mod1,method="leek")
+
+print(paste0("The number of surrogate variable by asymptotic approach: ", n.sv10))
+
 n.sv1 = num.sv(Edata1, mod1, method="be", B = 1000)
 
-print(paste0("The number of surrogate variable: ", n.sv1))
+print(paste0("The number of surrogate variable by permutation test: ", n.sv1))
 
 if(n.sv1 == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
@@ -860,9 +917,13 @@ mod20 = model.matrix(~ 1, data = train2.2)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv20 = num.sv(Edata2,mod2,method="leek")
+
+print(paste0("The number of surrogate variable by asymptotic approach: ", n.sv20))
+
 n.sv2 = num.sv(Edata2, mod2, method="be", B = 1000)
 
-print(paste0("The number of surrogate variable: ", n.sv1))
+print(paste0("The number of surrogate variable by permutation test: ", n.sv1))
 
 if(n.sv2 == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
@@ -925,6 +986,13 @@ source('/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate 
 HatB1 = Edata1 %*% mod1 %*% solve(t(mod1) %*% mod1) 
 R1 = Edata1 - HatB1 %*% t(mod1)
 
+MR1 = melt(R1)
+ubg9.1 = ggplot(MR1, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg9.1) +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(ubg9.1)
+
 R.pc1 = getPcaResult(R1, varNames = colnames(R1), scale=F, center = F)
 
 R.pv1 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc1$varDf), value = R.pc1$varDf[,2])
@@ -943,7 +1011,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc1$varDf)
@@ -974,20 +1041,26 @@ bv1 = as.numeric(unlist(train2.1 %>% select(batch)))
 y1 = as.numeric(unlist(Y1))
 
 R.dir1 = R.pc1$dirDf
-R.cor1 = data.frame(PC = colnames(R.dir1), angle = acos(cor(R.dir1, bv1))/pi * 180 )
+R.cor1 = data.frame(PC = colnames(R.dir1), angle = acos(abs(cor(R.dir1, bv1)))/pi * 180 )
 
 ubg8.1 = ggplot(data = R.cor1, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(cor(svobj1$sv, bv1))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
-  labs(x = "PC", y = "Angle",  title = title_ubg8.1) + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
+  geom_hline(yintercep = acos(abs(cor(svobj1$sv, bv1)))/pi * 180, col = "blue", linetype = "dashed") +
+  labs(x = "PC", y = "Angle", title = title_ubg8.1) + 
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 15))
 
 # analysis second data set -------------------------------------------------
 
 # estimate the coefficient of basis matrix
 HatB2 = Edata2 %*% mod2 %*% solve(t(mod2) %*% mod2) 
 R2 = Edata2 - HatB2 %*% t(mod2)
+
+MR2 = melt(R2)
+ubg9.2 = ggplot(MR2, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg9.2) +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(ubg9.2)
 
 R.pc2 = getPcaResult(R2, varNames = colnames(R2), scale=F, center = F)
 
@@ -1008,7 +1081,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), center = F, scale = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc2$varDf)
@@ -1039,14 +1111,13 @@ bv2 = as.numeric(unlist(train2.2 %>% select(batch)))
 y2 = as.numeric(unlist(Y2))
 
 R.dir2 = R.pc2$dirDf
-R.cor2 = data.frame(PC = colnames(R.dir2), angle = acos(cor(R.dir2, bv2))/pi * 180 )
+R.cor2 = data.frame(PC = colnames(R.dir2), angle = acos(abs(cor(R.dir2, bv2)))/pi * 180 )
 
 ubg8.2 = ggplot(data = R.cor2, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(cor(svobj2$sv, bv2))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
+  geom_hline(yintercep = acos(abs(cor(svobj2$sv, bv2)))/pi * 180, col = "blue", linetype = "dashed") +
   labs(x = "PC", y = "Angle", title = title_ubg8.2) + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 15))
 
 # print the figures
 
@@ -1102,6 +1173,8 @@ title_ubg7.1 = paste0("Screeplot \n pi_1 = ", pi_1,
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg8.1 = paste0("Angles between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect) \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg9.1 = paste0("Residual Matrix \n pi_1 = ", pi_1, 
+                      ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 
 ubg1.1 = ggplot(Mdata1, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value", title = title_ubg1.1) +
@@ -1128,11 +1201,13 @@ title_ubg4.2 <- paste0("Batch effects of two batches \n pi_1 = ", pi_1,
                        ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg5.2 = paste0("Simulation data after ajustment \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg6.2 = paste0("Eigenvalues Boxplot \n pi_1 = ", pi_1, 
+title_ubg6.2 = paste0("Eigenvalues Boxplot \n Permuting within columns \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
-title_ubg7.2 = paste0("Screeplot \n pi_1 = ", pi_1, 
+title_ubg7.2 = paste0("Screeplot \n Permuting within columns \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 title_ubg8.2 = paste0("Angles between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect) \n pi_1 = ", pi_1, 
+                      ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg9.2 = paste0("Residual Matrix \n pi_1 = ", pi_1, 
                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
 ubg1.2 = ggplot(Mdata2, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene",  fill = "Value", title = title_ubg1.2) +
@@ -1154,9 +1229,13 @@ mod10 = model.matrix(~ 1, data = train3.1)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv10 = num.sv(Edata1,mod1,method="leek")
+
+print(paste0("The number of surrogate variable by asymptotic approach: ", n.sv10))
+
 n.sv1 = num.sv(Edata1, mod1, method="be", B = 1000)
 
-print(paste0("The number of surrogate variable: ", n.sv1))
+print(paste0("The number of surrogate variable by permutation test: ", n.sv1))
 
 if(n.sv1 == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
@@ -1208,6 +1287,10 @@ mod20 = model.matrix(~ 1, data = train3.2)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv20 = num.sv(Edata2,mod2,method="leek")
+
+print(paste0("The number of surrogate variable by asymptotic approach: ", n.sv20))
+
 n.sv2 = num.sv(Edata2, mod2, method="be", B = 1000)
 
 print(paste0("The number of surrogate variable: ", n.sv2))
@@ -1273,6 +1356,13 @@ source('/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate 
 HatB1 = Edata1 %*% mod1 %*% solve(t(mod1) %*% mod1) 
 R1 = Edata1 - HatB1 %*% t(mod1)
 
+MR1 = melt(R1)
+ubg9.1 = ggplot(MR1, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg9.1 ) +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(ubg9.1)
+
 R.pc1 = getPcaResult(R1, varNames = colnames(R1), scale=F, center = F)
 
 R.pv1 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc1$varDf), value = R.pc1$varDf[,2])
@@ -1291,7 +1381,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc1$varDf)
@@ -1322,20 +1411,26 @@ bv1 = as.numeric(unlist(train3.1 %>% select(batch)))
 y1 = as.numeric(unlist(Y1))
 
 R.dir1 = R.pc1$dirDf
-R.cor1 = data.frame(PC = colnames(R.dir1), angle = acos(cor(R.dir1, bv1))/pi * 180 )
+R.cor1 = data.frame(PC = colnames(R.dir1), angle = acos(abs(cor(R.dir1, bv1)))/pi * 180 )
 
 ubg8.1 = ggplot(data = R.cor1, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(cor(svobj1$sv, bv1))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
-  labs(x = "PC", y = "Angle",  title = title_ubg8.1) + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
+  geom_hline(yintercep = acos(abs(cor(svobj1$sv, bv1)))/pi * 180, col = "blue", linetype = "dashed") +
+  labs(x = "PC", y = "Angle", title = title_ubg8.1) + 
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 15))
 
 # analysis second data set -------------------------------------------------
 
 # estimate the coefficient of basis matrix
 HatB2 = Edata2 %*% mod2 %*% solve(t(mod2) %*% mod2) 
 R2 = Edata2 - HatB2 %*% t(mod2)
+
+MR2 = melt(R2)
+ubg9.2 = ggplot(MR1, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg9.2) +
+  geom_tile() + 
+  scale_fill_gradient2()
+print(ubg9.2)
 
 R.pc2 = getPcaResult(R2, varNames = colnames(R2), scale=F, center = F)
 
@@ -1356,7 +1451,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), center = F, scale = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc2$varDf)
@@ -1387,14 +1481,13 @@ bv2 = as.numeric(unlist(train3.2 %>% select(batch)))
 y2 = as.numeric(unlist(Y2))
 
 R.dir2 = R.pc2$dirDf
-R.cor2 = data.frame(PC = colnames(R.dir2), angle = acos(cor(R.dir2, bv2))/pi * 180 )
+R.cor2 = data.frame(PC = colnames(R.dir2), angle = acos(abs(cor(R.dir2, bv2)))/pi * 180 )
 
 ubg8.2 = ggplot(data = R.cor2, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(cor(svobj2$sv, bv2))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
+  geom_hline(yintercep = acos(abs(cor(svobj2$sv, bv2)))/pi * 180, col = "blue", linetype = "dashed") +
   labs(x = "PC", y = "Angle", title = title_ubg8.2) + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 15))
 
 # print the figures
 
@@ -1404,6 +1497,102 @@ grid.arrange(ubg8.1, ubg8.2, nrow = 1, ncol = 2)
 
 ```
 
+## Real data example: Expression from a study of bladder cancer
+
+This is an expression set consisting of 57 samples drawn from a study of bladder cancer. The samples were collected on different dates which have been used to define 5 batches. These data are used as an example in the sva package vignette.
+
+Here is the visualization of the Expression data.
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+# load the data
+library(dplyr)
+library(ggplot2)
+library(sva)
+library(bladderbatch)
+library(limma)
+library(reshape2)
+load("/Users/meileijiang/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/rdata/bladder.RData")
+# data processing
+data(bladderdata)
+pheno = pData(bladderEset)
+edata = exprs(bladderEset)
+Mdata = melt(edata)
+
+g0 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value", 
+       title = expression(atop("Expression from a study of bladder cancer", 
+                               atop(italic("22283 Genes in rows and 57 samples in columns"), "")))) +
+  geom_tile() + 
+  scale_fill_gradient2(midpoint = 6) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(),axis.text.y = element_blank())
+
+print(g0)
+```
+
+### Apply SVA algorithm to detect the surrogate variable
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(sva)
+library(bladderbatch)
+library(limma)
+library(reshape2)
 
 
 
+## make two model matrices
+# full modelcontains both the adjustment varables and the variable of interest (cancer status) 
+mod = model.matrix(~as.factor(cancer), data=pheno)
+# null model contains only the adjustment variables
+mod0 = model.matrix(~1,data=pheno)
+
+# estimate the number of latent factors that need to be estimated
+n.sv0 = num.sv(edata,mod,method="leek")
+print(paste0("Number of surrogate variable by asymptotic approach: ", n.sv0))
+
+n.sv = num.sv(edata,mod,method="be", B = 1000)
+print(paste0("Number of surrogate variable by permutation test: ", n.sv))
+```
+
+### Residual Matrix Permuting Analysis
+
+#### Permuting within rows as described in the literature
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(sva)
+library(bladderbatch)
+library(limma)
+library(reshape2)
+library(gridExtra)
+
+HatB = edata %*% mod %*% solve(t(mod) %*% mod) 
+R = edata - HatB %*% t(mod)
+
+MR = melt(R)
+g1 = ggplot(MR, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",
+       title = expression(atop("Expression after removing primary variable effects", 
+                               atop(italic("22283 Genes in rows and 57 samples in columns"), "")))) +
+  geom_tile() + 
+  scale_fill_gradient2(midpoint = 0) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(),axis.text.y = element_blank())
+
+print(g1)
+
+grid.arrange(g3, g4)
+```
+
+#### Permuting within rows and then within columns
+
+```{r, echo = FALSE, warning=FALSE, message = FALSE}
+library(dplyr)
+library(ggplot2)
+library(sva)
+library(bladderbatch)
+library(limma)
+library(reshape2)
+library(gridExtra)
+grid.arrange(g5, g6)
+```
