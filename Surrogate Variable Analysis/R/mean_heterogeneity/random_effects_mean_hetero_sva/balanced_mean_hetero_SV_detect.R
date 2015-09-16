@@ -46,6 +46,8 @@ n.sv = num.sv(Edata,mod,method="leek", B = 1000)
 
 print(paste0("The number of surrogate variable: ", n.sv))
 
+n.sv = num.sv(Edata,mod,method="be", B = 1000)
+
 if(n.sv == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
   svobj = sva(t(M),mod, mod0,n.sv= 1, B = 5)
@@ -63,9 +65,9 @@ Edb = fsvobj$db
 # visualize the result
 trainSV <- data.frame(Y, t(Edb), batch = train0$batch)
 
-ggplot(data = trainSV, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = trainSV, aes(x = batch, y = X3)) + geom_boxplot()
 
-ggplot(data = train0, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = train0, aes(x = as.factor(batch), y = X3)) + geom_boxplot()
 
 ggplot(data = trainSV, aes(x = X2, group = batch, col = batch)) + 
   geom_density(linetype = "dashed") + 
@@ -102,7 +104,8 @@ pvMat = matrix(nrow = B, ncol = n1)
 tempR = R
 for(k in 1:B){
   # make permutation of each row independently
-  newE = apply(tempR, 2, sample, replace = FALSE)
+  newE = t(apply(tempR, 1, sample, replace = FALSE))
+#  newE = apply(tempR, 2, sample, replace = FALSE)
   # refit the model to get the new residual matrix
   newR = newE - newE %*% mod %*% solve(t(mod) %*% mod) %*% t(mod)
   colnames(newR) = c(1:n1)

@@ -117,8 +117,7 @@ n1 = dim(R.pc$varDf)[1]; n2 = dim(R)[2]
 pvMat2 = matrix(nrow = B, ncol = n1)
 for(k in 1:B){
   # make permutation of each row independently
-  newE0 = t(apply(R, 1, sample, replace = FALSE))
-  newE = apply(newE0, 2, sample, replace = FALSE)  
+  newE = apply(R, 2, sample, replace = FALSE)  
 #  newE = apply(tempR, 2, sample, replace = FALSE)
   # refit the model to get the new residual matrix
   newR = newE - newE %*% mod %*% solve(t(mod) %*% mod) %*% t(mod)

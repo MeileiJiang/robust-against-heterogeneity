@@ -42,7 +42,7 @@ mod0 = model.matrix(~ 1, data = train0)
 
 
 # estimate the number of latent factors that need to be estimated ---------
-n.sv = num.sv(Edata,mod,method="leek")
+n.sv0 = num.sv(Edata,mod,method="leek")
 
 n.sv = num.sv(Edata,mod,method="be", B = 1000)
 
@@ -65,11 +65,11 @@ Edb = fsvobj$db
 # visualize the result
 trainSV <- data.frame(Y, t(Edb), batch = train0$batch)
 
-ggplot(data = trainSV, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = trainSV, aes(x = as.factor(batch), y = X31)) + geom_boxplot()
 
-ggplot(data = train0, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = train0, aes(x = as.factor(batch), y = X31)) + geom_boxplot()
 
-ggplot(data = trainSV, aes(x = X2, group = batch, col = batch)) + 
+ggplot(data = trainSV, aes(x = X31, group = batch, col = batch)) + 
   geom_density(linetype = "dashed") + 
   geom_density(data = train0, aes(x = X2, group = batch, col = batch))
 
@@ -95,23 +95,21 @@ R.pc = getPcaResult(R, varNames = colnames(R), scale=F, center = F)
 
 R.pv =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc$varDf), value = R.pc$varDf[,2])
 
-pcaScreePlot(pcaResult = R.pc, title="Scree Plot")
 
 # use permutation test to find the unusual large eigenvalues --------------
 B = 1000
 n1 = dim(R.pc$varDf)[1]; n2 = dim(R)[2]
 pvMat = matrix(nrow = B, ncol = n1)
-tempR = R
 for(k in 1:B){
   # make permutation of each row independently
-  newE = apply(tempR, 2, sample, replace = FALSE)
+  # newE = apply(R, 2, sample, replace = FALSE)
+  newE = t(apply(R, 1, sample, replace = FALSE))
   # refit the model to get the new residual matrix
   newR = newE - newE %*% mod %*% solve(t(mod) %*% mod) %*% t(mod)
   colnames(newR) = c(1:n1)
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc$varDf)
@@ -139,17 +137,16 @@ y = as.numeric(unlist(Y))
 cor(y, bv)
 # [1] 0
 cor(svobj$sv, bv)
-# [1] 0.8933645
+# [1] -0.991649
 R.dir = R.pc$dirDf
-R.cor = data.frame(PC = colnames(R.dir), angle = acos(cor(R.dir, bv))/pi * 180 )
+R.cor = data.frame(PC = colnames(R.dir), angle = acos(abs(cor(R.dir, bv)))/pi * 180 )
 
 
 ggplot(data = R.cor, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(cor(svobj$sv, bv))/pi * 180, col = "blue", linetype = "dashed") +
-  geom_hline(yintercep = 90, col = "red", linetype = "dashed") + 
+  geom_hline(yintercep = acos(abs(cor(svobj$sv, bv)))/pi * 180, col = "blue", linetype = "dashed") +
   labs(x = "PC", y = "Angle", 
        title = "Angle between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect)") + 
-  scale_y_continuous(limits = c(0, 180), breaks = seq(0, 180, by = 30))
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 30))
 
 

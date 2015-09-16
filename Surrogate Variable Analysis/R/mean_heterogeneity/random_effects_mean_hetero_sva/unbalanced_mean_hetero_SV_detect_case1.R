@@ -12,17 +12,21 @@ library(reshape2)
 
 # data processing ---------------------------------------------------------
 
-load("rdata/mean_hetero_example.RData")
-source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/pcaScreePlot.R')
+load("rdata/random_effects_mean_hetero_example.RData")
 source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/getPcaResult.R')
 
 # analysis first data set -------------------------------------------------
 
 M1 <- train1.1 %>% select(-y, -batch, -pi_1, -pi_2)
+pi_1 <- unique(train3.1$pi_1); pi_2 <- unique(train3.1$pi_2)
+p_1 <- (pi_1 + pi_2)/2; p_2 <- 1 - p_1
+
+
 # Expression data
 Edata1 = t(M1)
 colnames(Edata1) = paste0("sample", c(1: dim(Edata1)[2]))
 Mdata1 = melt(Edata1)
+
 
 ggplot(Mdata1, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value") +
@@ -40,12 +44,16 @@ mod10 = model.matrix(~ 1, data = train1.1)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv10 = num.sv(Edata1, mod1, method="leek")
 n.sv1 = num.sv(Edata1, mod1, method="be", B = 1000)
+print(paste0("The number of surrogate variable: ", n.sv1))
 
-# it fails to estimate the number of surogate variable
-
-# estimate the surrogate variables
-svobj1 = sva(t(M1), mod1, mod10, n.sv= 1, B = 5)
+if(n.sv1 == 0){
+  print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
+  svobj1 = sva(t(M1),mod1, mod10,n.sv= 1, B = 5)
+} else{
+  svobj1 = sva(t(M1),mod1, mod10,n.sv= n.sv1, B = 5)
+}
 
 
 # Remove the batch effects
@@ -56,9 +64,11 @@ Edb1 = fsvobj1$db
 # visualize the result
 trainSV1 <- data.frame(Y1, t(Edb1), batch = train1.1$batch)
 
-ggplot(data = trainSV1, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = trainSV1, aes(x = batch, y = X2)) + geom_boxplot()
+ggplot(data = trainSV1, aes(x = batch, y = X2, col = y)) + geom_point()
 
-ggplot(data = train1.1, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = train1.1, aes(x = batch, y = X2)) + geom_boxplot()
+ggplot(data = train1.1, aes(x = batch, y = X2, col = y)) + geom_point()
 
 ggplot(data = trainSV1, aes(x = X2, group = batch, col = batch)) + 
   geom_density(linetype = "dashed") + 
@@ -167,13 +177,18 @@ mod20 = model.matrix(~ 1, data = train1.2)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv20 = num.sv(Edata2, mod2, method="leek", B = 1000)
+
 n.sv2 = num.sv(Edata2, mod2, method="be", B = 1000)
 
-# it fails to estimate the number of surogate variable
+print(paste0("The number of surrogate variable: ", n.sv2))
 
-# estimate the surrogate variables
-svobj2 = sva(t(M2), mod2, mod20, n.sv= 1, B = 5)
-
+if(n.sv2 == 0){
+  print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
+  svobj2 = sva(t(M2),mod2, mod20,n.sv= 1, B = 5)
+} else{
+  svobj2 = sva(t(M2),mod2, mod20,n.sv= n.sv2, B = 5)
+}
 
 
 
@@ -185,7 +200,9 @@ Edb2 = fsvobj2$db
 # visualize the result
 trainSV2 <- data.frame(Y2, t(Edb2), batch = train1.2$batch)
 
-ggplot(data = trainSV2, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = trainSV2, aes(x = batch, y = X2)) + geom_boxplot()
+
+ggplot(data = trainSV2, aes(x = batch, y = X2, col = y)) + geom_point()
 
 ggplot(data = train1.2, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
 

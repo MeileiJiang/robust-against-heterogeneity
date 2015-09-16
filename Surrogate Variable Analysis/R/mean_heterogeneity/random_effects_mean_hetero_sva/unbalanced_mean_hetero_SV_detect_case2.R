@@ -12,8 +12,7 @@ library(reshape2)
 
 # data processing ---------------------------------------------------------
 
-load("rdata/mean_hetero_example.RData")
-source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/pcaScreePlot.R')
+load("rdata/random_effects_mean_hetero_example.RData")
 source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/getPcaResult.R')
 
 # analysis first data set -------------------------------------------------
@@ -40,13 +39,17 @@ mod10 = model.matrix(~ 1, data = train2.1)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv10 = num.sv(Edata1, mod1, method="leek", B = 1000)
 n.sv1 = num.sv(Edata1, mod1, method="be", B = 1000)
-n.sv1
-# [1] 1
-# it succesfully estimate the number of surogate variable
+print(paste0("The number of surrogate variable: ", n.sv1))
 
-# estimate the surrogate variables
-svobj1 = sva(t(M1), mod1, mod10, n.sv= 1, B = 5)
+
+if(n.sv1 == 0){
+  print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
+  svobj1 = sva(t(M1),mod1, mod10,n.sv= 1, B = 5)
+} else{
+  svobj1 = sva(t(M1),mod1, mod10,n.sv= n.sv1, B = 5)
+}
 
 
 # Remove the batch effects
@@ -93,17 +96,16 @@ R.pv1 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc1$varDf), value = R.pc1
 B = 1000
 n1 = dim(R.pc1$varDf)[1]; n2 = dim(R1)[2]
 pvMat = matrix(nrow = B, ncol = n1)
-tempR = R1
 for(k in 1:B){
   # make permutation of each row independently
-  newE = t(apply(tempR, 1, sample, replace = FALSE))
+#  newE = t(apply(R1, 1, sample, replace = FALSE))
+  newE = apply(R1, 2, sample, replace = FALSE)
   # refit the model to get the new residual matrix
   newR = newE - newE %*% mod1 %*% solve(t(mod1) %*% mod1) %*% t(mod1)
   colnames(newR) = c(1:n1)
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc1$varDf)
@@ -168,14 +170,18 @@ mod20 = model.matrix(~ 1, data = train2.2)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv20 = num.sv(Edata2, mod2, method="leek")
+
 n.sv2 = num.sv(Edata2, mod2, method="be", B = 1000)
 
-# it fails to estimate the number of surogate variable
+print(paste0("The number of surrogate variable: ", n.sv2))
 
-# estimate the surrogate variables
-svobj2 = sva(t(M2), mod2, mod20, n.sv= 1, B = 5)
-
-
+if(n.sv2 == 0){
+  print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
+  svobj2 = sva(t(M2),mod2, mod20,n.sv= 1, B = 5)
+} else{
+  svobj2 = sva(t(M2),mod2, mod20,n.sv= n.sv2, B = 5)
+}
 
 
 # Remove the batch effects
@@ -186,9 +192,13 @@ Edb2 = fsvobj2$db
 # visualize the result
 trainSV2 <- data.frame(Y2, t(Edb2), batch = train2.2$batch)
 
-ggplot(data = trainSV2, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = trainSV2, aes(x = batch, y = X2, col = y)) + geom_point()
+
+ggplot(data = trainSV2, aes(x = as.factor(batch), y = X3)) + geom_boxplot()
 
 ggplot(data = train2.2, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+
+ggplot(data = train2.2, aes(x = batch, y = X2, col = y)) + geom_point()
 
 ggplot(data = trainSV2, aes(x = X2, group = batch, col = batch)) + 
   geom_density(linetype = "dashed") + 
@@ -216,27 +226,21 @@ R.pc2 = getPcaResult(R2, varNames = colnames(R2), center = F, scale = F)
 
 R.pv2 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc2$varDf), value = R.pc2$varDf[,2])
 
-pcaScreePlot(pcaResult = R.pc2, title="Scree Plot")
 
 # use permutation test to find the unusual large eigenvalues --------------
 B = 1000
 n1 = dim(R.pc2$varDf)[1]; n2 = dim(R2)[2]
 pvMat = matrix(nrow = B, ncol = n1)
-tempR = R2
 for(k in 1:B){
   # make permutation of each row independently
-  newE = matrix(nrow = n1, ncol = n2)
-#   for(i in 1:n1){
-#     newE[i,1:n2] = sample(tempR[i,])
-#   }
-  newE <- t(apply(tempR, 1, sample, replace = FALSE))
+  newE <- apply(R2, 2, sample, replace = FALSE)
+  #newE <- t(apply(R2, 1, sample, replace = FALSE))
   # refit the model to get the new residual matrix
   newR = newE - newE %*% mod2 %*% solve(t(mod2) %*% mod2) %*% t(mod2)
   colnames(newR) = c(1:n1)  
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), center = F, scale = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc2$varDf)

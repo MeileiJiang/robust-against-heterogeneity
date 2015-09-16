@@ -12,8 +12,8 @@ library(reshape2)
 
 # data processing ---------------------------------------------------------
 
-load("rdata/mean_hetero_example.RData")
-source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/pcaScreePlot.R')
+load("rdata/random_effects_mean_hetero_example.RData")
+source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/getPcaResult.R')
 
 # analysis first data set -------------------------------------------------
 
@@ -48,7 +48,7 @@ ubg1.1 = ggplot(Mdata1, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value", title = title_ubg1.1) +
   geom_tile() + 
   scale_fill_gradient2()
-
+print(ubg1.1)
 # primary variable of interest
 Y1 <- train3.1 %>% select(y)
 
@@ -60,6 +60,7 @@ mod10 = model.matrix(~ 1, data = train3.1)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv10 = num.sv(Edata1, mod1, method="leek", B = 1000)
 n.sv1 = num.sv(Edata1, mod1, method="be", B = 1000)
 print(paste0("The number of surrogate variable: ", n.sv1))
 
@@ -177,6 +178,8 @@ ggplot(data = R.cor1, aes(x = PC, y = angle))+
 # analysis second data set -------------------------------------------------
 
 M2 <- train3.2 %>% select(-y, -batch, -pi_1, -pi_2)
+pi_1 <- unique(train3.2$pi_1); pi_2 <- unique(train3.2$pi_2)
+p_1 <- (pi_1 + pi_2)/2; p_2 <- 1 - p_1
 # Expression data
 Edata2 = t(M2)
 colnames(Edata2) = paste0("sample", c(1: dim(Edata2)[2]))
@@ -198,6 +201,8 @@ mod20 = model.matrix(~ 1, data = train3.2)
 
 
 # estimate the number of latent factors that need to be estimated ---------
+n.sv20 = num.sv(Edata2, mod2, method="leek", B = 1000)
+
 n.sv2 = num.sv(Edata2, mod2, method="be", B = 1000)
 
 print(paste0("The number of surrogate variable: ", n.sv2))
@@ -218,9 +223,9 @@ Edb2 = fsvobj2$db
 # visualize the result
 trainSV2 <- data.frame(Y2, t(Edb2), batch = train3.2$batch)
 
-ggplot(data = trainSV2, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = trainSV2, aes(x = batch, y = X2)) + geom_boxplot()
 
-ggplot(data = train3.2, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
+ggplot(data = train3.2, aes(x = batch, y = X2)) + geom_boxplot()
 
 ggplot(data = trainSV2, aes(x = X2, group = batch, col = batch)) + 
   geom_density(linetype = "dashed") + 
@@ -253,17 +258,16 @@ R.pv2 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc2$varDf), value = R.pc2
 B = 1000
 n1 = dim(R.pc2$varDf)[1]; n2 = dim(R2)[2]
 pvMat = matrix(nrow = B, ncol = n1)
-tempR = R2
 for(k in 1:B){
   # make permutation of each row independently
-  newE <- apply(tempR, 2, sample, replace = FALSE)
+  #newE <- apply(R2, 2, sample, replace = FALSE)
+  newE <- t(apply(R2, 1, sample, replace = FALSE))
   # refit the model to get the new residual matrix
   newR = newE - newE %*% mod2 %*% solve(t(mod2) %*% mod2) %*% t(mod2)
   colnames(newR) = c(1:n1)  
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), center = F, scale = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc2$varDf)

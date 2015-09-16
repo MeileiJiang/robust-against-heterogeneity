@@ -65,10 +65,6 @@ Edb = fsvobj$db
 # visualize the result
 trainSV <- data.frame(Y, t(Edb), batch = train4$batch)
 
-ggplot(data = trainSV, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
-
-ggplot(data = train4, aes(x = as.factor(batch), y = X2)) + geom_boxplot()
-
 ggplot(data = trainSV, aes(x = X2, group = batch, col = batch)) + 
   geom_density(linetype = "dashed") + 
   geom_density(data = train4, aes(x = X2, group = batch, col = batch))
@@ -111,7 +107,6 @@ for(k in 1:B){
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
-  temoR = newR
 }
 
 colnames(pvMat) = rownames(R.pc$varDf)
