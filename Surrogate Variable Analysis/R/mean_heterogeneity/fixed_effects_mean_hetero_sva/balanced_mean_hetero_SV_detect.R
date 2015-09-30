@@ -13,140 +13,226 @@ library(reshape2)
 # data processing ---------------------------------------------------------
 
 load("rdata/mean_hetero_example.RData")
-source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/pcaScreePlot.R')
 source('~/researchspace/robust-against-heterogeneity/Surrogate Variable Analysis/pcafuns/R/getPcaResult.R')
+
+n = 80 # number of samples
 
 # analysis first data set -------------------------------------------------
 
-M <- train0 %>% select(-y, -batch, -pi_1, -pi_2 )
-pi_1 <- unique(train4$pi_1); pi_2 <- unique(train4$pi_2)
+M1 <- train0 %>% select(-y, -batch, -pi_1, -pi_2)
+pi_1 <- unique(train0$pi_1); pi_2 <- unique(train0$pi_2)
 p_1 <- (pi_1 + pi_2)/2; p_2 <- 1 - p_1
+
+
 # Expression data
-Edata = t(M)
-colnames(Edata) = paste0("sample", c(1: dim(Edata)[2]))
-Mdata = melt(Edata)
+Edata1 = t(M1)
+colnames(Edata1) = paste0("sample", c(1: dim(Edata1)[2]))
+Mdata1 = melt(Edata1)
 
-ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value") +
+title_ubg1.1 <- paste0("Simulation data \n pi_1 = ", pi_1, 
+                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg2.1 <- paste0("Estimation of primary effects before adjustment \n pi_1 = ", pi_1, 
+                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg3.1 <- paste0("Estimation of primary effects after adjustment \n pi_1 = ", pi_1, 
+                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg4.1 <- paste0("Simulation data after ajustment \n pi_1 = ", pi_1, 
+                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg5.1 <- paste0("Residual Matrix After Removing Primary Effect \n pi_1 = ", pi_1, 
+                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg6.1 <- paste0("Eigenvalues Boxplot \n pi_1 = ", pi_1, 
+                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg7.1 <- paste0("Screeplot \n pi_1 = ", pi_1, 
+                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+title_ubg8.1 <- paste0("Angles between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect) \n pi_1 = ", pi_1, 
+                       ", pi_2 = ", pi_2, "\n p_1 = ", p_1, ", p_2 = ", p_2)
+
+ubg1.1 = ggplot(Mdata1, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value", title = title_ubg1.1) +
   geom_tile() + 
-  scale_fill_gradient2()
-
+  scale_fill_gradient2() +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+print(ubg1.1)
 # primary variable of interest
-Y <- train0 %>% select(y)
+Y1 <- train0 %>% select(y)
 
 # make model matrix -------------------------------------------------------
 ## full model 
-mod = model.matrix(~ y, data = train0)
+mod1 = model.matrix(~ y, data = train0)
 ## null model
-mod0 = model.matrix(~ 1, data = train0)
+mod10 = model.matrix(~ 1, data = train0)
 
 
 # estimate the number of latent factors that need to be estimated ---------
-n.sv0 = num.sv(Edata,mod,method="leek")
+n.sv10 = num.sv(Edata1, mod1, method="leek")
 
-n.sv = num.sv(Edata,mod,method="be", B = 1000)
+n.sv1 = num.sv(Edata1, mod1, method="be", B = 1000)
 
-print(paste0("The number of surrogate variable: ", n.sv))
+print(paste0("The number of surrogate variable: ", n.sv1))
 
-if(n.sv == 0){
+if(n.sv1 == 0){
   print("Mannually setting the number of surrogate variable as 1 to apply the sva algorithm")
-  svobj = sva(t(M),mod, mod0,n.sv= 1, B = 5)
+  svobj1 = sva(t(M1),mod1, mod10,n.sv= 1, B = 5)
 } else{
-  svobj = sva(t(M),mod, mod0,n.sv= n.sv, B = 5)
+  svobj1 = sva(t(M1),mod1, mod10,n.sv= n.sv1, B = 5)
 }
 
 
-
 # Remove the batch effects
-fsvobj = fsva(Edata, mod, svobj, Edata)
+fsvobj1 = fsva(Edata1, mod1, svobj1, Edata1)
 
-Edb = fsvobj$db
+Edb1 = fsvobj1$db
+
+# Estimate class effects on features from original data matrix
+
+HatB1 = Edata1 %*% mod1 %*% solve(t(mod1) %*% mod1) 
+
+Effect11 = HatB1 %*% matrix(c(1,1,0,1), nrow = 2, byrow = T)
+rownames(Effect11) = rownames(Edata1)
+colnames(Effect11) = c('yClass1', 'yClass2')
+Effect11_df = data.frame(Effect11, feature = fe, x = factor(paste0('X',1:100), levels = paste0('X',1:100)))
+
+MEff11_df = melt(Effect11_df)
+ubg2.1 = ggplot(data = MEff11_df, aes(x = x, y = value, col = feature, shape = variable)) + 
+  geom_point() + 
+  scale_y_continuous(limits = c(-4.5, 4.5), breaks=-4:4) + 
+  scale_shape_manual(values = c(4, 16)) + 
+  labs(x = 'Gene',title = title_ubg2.1) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+print(ubg2.1)
+# Estimate class effects on features from original data matrix after removing the effects of surrogate variable 
+
+HatB12 = Edb1 %*% mod1 %*% solve(t(mod1) %*% mod1) 
+
+Effect12 = HatB12 %*% matrix(c(1,1,0,1), nrow = 2, byrow = T)
+rownames(Effect12) = rownames(Edb1)
+colnames(Effect12) = c('yClass1', 'yClass2')
+Effect12_df = data.frame(Effect12, feature = fe, x = factor(paste0('X',1:100), levels = paste0('X',1:100)))
+
+MEff12_df = melt(Effect12_df)
+ubg3.1 = ggplot(data = MEff12_df, aes(x = x, y = value, col = feature, shape = variable)) + 
+  geom_point() + 
+  scale_y_continuous(limits = c(-4.5, 4.5), breaks=-4:4) + 
+  scale_shape_manual(values = c(4, 16)) +
+  labs(x = 'Gene',title = title_ubg3.1) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+print(ubg3.1)
 
 # visualize the result
-trainSV <- data.frame(Y, t(Edb), batch = train0$batch)
 
-ggplot(data = trainSV, aes(x = as.factor(batch), y = X31)) + geom_boxplot()
+Mdb1 = melt(Edb1)
 
-ggplot(data = train0, aes(x = as.factor(batch), y = X31)) + geom_boxplot()
-
-ggplot(data = trainSV, aes(x = X31, group = batch, col = batch)) + 
-  geom_density(linetype = "dashed") + 
-  geom_density(data = train0, aes(x = X2, group = batch, col = batch))
-
-Mdb = melt(Edb)
-ggplot(Mdb, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value",title = "1 Surrogate Variables") +
+ubg4.1 = ggplot(Mdb1, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg4.1) +
   geom_tile() + 
-  scale_fill_gradient2()
+  scale_fill_gradient2() +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
+print(ubg4.1)
 # dig into the analysis ---------------------------------------------------
 
-# estimate the coefficient of basis matrix
-HatB = Edata %*% mod %*% solve(t(mod) %*% mod) 
-R = Edata - HatB %*% t(mod)
-
-MR = melt(R)
-ggplot(MR, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value",title = "1 Surrogate Variables") +
+R1 = Edata1 - HatB1 %*% t(mod1)
+MR1 = melt(R1)
+ubg5.1 =  ggplot(MR1, aes(x = Var2, y = Var1, fill = value)) +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg5.1) +
   geom_tile() + 
-  scale_fill_gradient2()
+  scale_fill_gradient2() +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+print(ubg5.1)
+R.pc1 = getPcaResult(R1, varNames = colnames(R1), scale=F, center = F)
 
-R.pc = getPcaResult(R, varNames = colnames(R), scale=F, center = F)
-
-R.pv =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc$varDf), value = R.pc$varDf[,2])
-
+R.pv1 =  data.frame(Var1 = "Origin", Var2 = rownames(R.pc1$varDf), value = R.pc1$varDf[,2])
 
 # use permutation test to find the unusual large eigenvalues --------------
+
 B = 1000
-n1 = dim(R.pc$varDf)[1]; n2 = dim(R)[2]
+n1 = dim(R.pc1$varDf)[1]; n2 = dim(R1)[2]
 pvMat = matrix(nrow = B, ncol = n1)
 for(k in 1:B){
   # make permutation of each row independently
-  # newE = apply(R, 2, sample, replace = FALSE)
-  newE = t(apply(R, 1, sample, replace = FALSE))
+  newE = t(apply(R1, 1, sample, replace = FALSE))
+  #  newE = apply(newE0, 2, sample, replace = FALSE)
   # refit the model to get the new residual matrix
-  newR = newE - newE %*% mod %*% solve(t(mod) %*% mod) %*% t(mod)
+  newR = newE - newE %*% mod1 %*% solve(t(mod1) %*% mod1) %*% t(mod1)
   colnames(newR) = c(1:n1)
   # do pca on newR and take out the proprotion variance vector
   newR.pc = getPcaResult(newR, varNames = colnames(newR), scale=F, center = F)
   pvMat[k, 1:n1] = newR.pc$varDf[,2]
 }
 
-colnames(pvMat) = rownames(R.pc$varDf)
+colnames(pvMat) = rownames(R.pc1$varDf)
 rownames(pvMat) = paste0("Run", 1:B)
 
-EpvMat = melt(pvMat)
-pv_stat = EpvMat %>% 
+EpvMat1 = melt(pvMat)
+pv_stat1 = EpvMat1 %>% 
   group_by(Var2) %>%
-  summarise(Median = median(value), Q950 = quantile(value, .95), Q000 = quantile(value, .0)) 
+  summarise(Median = median(value), Q900 = quantile(value, .9), Q000 = quantile(value, .0)) 
 
-ggplot(data = pv_stat, aes(x = Var2, y = Median) )+ 
+ubg6.1 = ggplot(data = pv_stat1, aes(x = Var2, y = Median) )+ 
   geom_point(col = "blue") +
-  geom_errorbar(aes(ymax = Q950, ymin = Q000)) + 
-  geom_point(data = R.pv, aes(x = Var2, y = value), col = "red")
+  geom_errorbar(aes(ymax = Q900, ymin = Q000)) + 
+  geom_point(data = R.pv1, aes(x = Var2, y = value), col = "red") +
+  labs(x= 'PC', y = 'Porpotion of variance', title = title_ubg6.1) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
-ggplot(data = EpvMat, aes(x = Var2, y = value, group = Var1)) + 
+ubg7.1 = ggplot(data = EpvMat1, aes(x = Var2, y = value, group = Var1)) + 
   geom_line(col = "blue") +
-  geom_line(data = R.pv, aes(x = Var2, y = value), col = "red") +
-  geom_point(data = R.pv, aes(x = Var2, y = value), col = "red", size = 2)
+  geom_line(data = R.pv1, aes(x = Var2, y = value), col = "red") +
+  geom_point(data = R.pv1, aes(x = Var2, y = value), col = "red", size = 2) +
+  labs(x= 'PC', y = 'Porpotion of variance', title = title_ubg7.1) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
+print(ubg6.1)
+print(ubg7.1)
 # Analysis of the angle between eigenvector and batch vector
 
-bv = as.numeric(unlist(train0 %>% select(batch)))
-y = as.numeric(unlist(Y))
-cor(y, bv)
+bv1 = as.numeric(unlist(train0 %>% select(batch)))
+y1 = as.numeric(unlist(Y1))
+cor(y1, bv1)
 # [1] 0
-cor(svobj$sv, bv)
-# [1] -0.991649
-R.dir = R.pc$dirDf
-R.cor = data.frame(PC = colnames(R.dir), angle = acos(abs(cor(R.dir, bv)))/pi * 180 )
+cor(svobj1$sv, bv1)
+# [1] 0.9939713
 
+R.dir1 = R.pc1$dirDf
+R.cor1 = data.frame(PC = colnames(R.dir1), angle = acos(abs(cor(R.dir1, bv1)))/pi * 180 )
 
-ggplot(data = R.cor, aes(x = PC, y = angle))+ 
+ubg8.1 = ggplot(data = R.cor1, aes(x = PC, y = angle))+ 
   geom_point() + 
-  geom_hline(yintercep = acos(abs(cor(svobj$sv, bv)))/pi * 180, col = "blue", linetype = "dashed") +
-  labs(x = "PC", y = "Angle", 
-       title = "Angle between PCs and Batch Effect \n blue dashed line: angle(SV, Batch Effect)") + 
-  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 30))
+  geom_hline(yintercep = acos(abs(cor(svobj1$sv, bv1)))/pi * 180, col = "blue", linetype = "dashed") +
+  labs(x = "PC", y = "Angle", title = title_ubg8.1) + 
+  scale_y_continuous(limits = c(0, 90), breaks = seq(0, 90, by = 30)) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
+print(ubg8.1)
 
+# save the plots
+pdf(file = 'figures/mean_heterogeneity/balance_case/ubg1.1.pdf', height  = 10, width = 8)
+print(ubg1.1)
+dev.off()
+
+pdf(file = 'figures/mean_heterogeneity/balance_case/ubg2.1.pdf')
+print(ubg2.1)
+dev.off()
+
+pdf(file = 'figures/mean_heterogeneity/balance_case/ubg3.1.pdf')
+print(ubg3.1)
+dev.off()
+
+pdf(file = 'figures/mean_heterogeneity/balance_case/ubg4.1.pdf', height  = 10, width = 8)
+print(ubg4.1)
+dev.off()
+
+pdf(file = 'figures/mean_heterogeneity/balance_case/ubg5.1.pdf', height  = 10, width = 8)
+print(ubg5.1)
+dev.off()
+
+pdf(file = 'figures/mean_heterogeneity/balance_case/ubg6.1.pdf')
+print(ubg6.1)
+dev.off()
+
+pdf(file = 'figures/mean_heterogeneity/balance_case/ubg7.1.pdf')
+print(ubg7.1)
+dev.off()
+
+pdf(file = 'figures/mean_heterogeneity/balance_case/ubg8.1.pdf')
+print(ubg8.1)
+dev.off()

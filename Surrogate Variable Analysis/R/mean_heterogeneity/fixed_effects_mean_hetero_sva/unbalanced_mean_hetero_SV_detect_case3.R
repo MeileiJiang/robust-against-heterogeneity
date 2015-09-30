@@ -49,7 +49,7 @@ title_ubg8.1 <- paste0("Angles between PCs and Batch Effect \n blue dashed line:
 ubg1.1 = ggplot(Mdata1, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value", title = title_ubg1.1) +
   geom_tile() + 
-  scale_fill_gradient2() +
+  scale_fill_gradient2(limits=c(-10, 10)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 print(ubg1.1)
 # primary variable of interest
@@ -124,7 +124,7 @@ Mdb1 = melt(Edb1)
 ubg4.1 = ggplot(Mdb1, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg4.1) +
   geom_tile() + 
-  scale_fill_gradient2() +
+  scale_fill_gradient2(limits=c(-10, 10)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
 print(ubg4.1)
@@ -135,7 +135,8 @@ MR1 = melt(R1)
 ubg5.1 =  ggplot(MR1, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg5.1) +
   geom_tile() + 
-  scale_fill_gradient2()
+  scale_fill_gradient2(limits=c(-10, 10)) +
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 print(ubg5.1)
 R.pc1 = getPcaResult(R1, varNames = colnames(R1), scale=F, center = F)
 
@@ -186,10 +187,10 @@ print(ubg7.1)
 
 bv1 = as.numeric(unlist(train3.1 %>% select(batch)))
 y1 = as.numeric(unlist(Y1))
-cor(y1, bv1)
-# [1] 0.2
-cor(svobj1$sv, bv1)
-# [1] 0.9914348
+acos(abs(cor(y1, bv1)))/pi * 180
+# [1] 78.40412
+acos(abs(cor(svobj1$sv, bv1)))/pi * 180
+# [1] 7.086582
 
 R.dir1 = R.pc1$dirDf
 R.cor1 = data.frame(PC = colnames(R.dir1), angle = acos(abs(cor(R.dir1, bv1)))/pi * 180 )
@@ -266,7 +267,7 @@ title_ubg8.2 <- paste0("Angles between PCs and Batch Effect \n blue dashed line:
 ubg1.2 = ggplot(Mdata2, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value", title = title_ubg1.2) +
   geom_tile() + 
-  scale_fill_gradient2() +
+  scale_fill_gradient2(limits=c(-10, 10)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 print(ubg1.2)
 # primary variable of interest
@@ -341,7 +342,7 @@ Mdb2 = melt(Edb2)
 ubg4.2 = ggplot(Mdb2, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg4.2) +
   geom_tile() + 
-  scale_fill_gradient2() +
+  scale_fill_gradient2(limits=c(-10, 10)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
 print(ubg4.2)
@@ -352,7 +353,7 @@ MR2 = melt(R2)
 ubg5.2 =  ggplot(MR2, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value",title = title_ubg5.2) +
   geom_tile() + 
-  scale_fill_gradient2() +
+  scale_fill_gradient2(limits=c(-10, 10)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 print(ubg5.2)
 R.pc2 = getPcaResult(R2, varNames = colnames(R2), scale=F, center = F)
@@ -404,10 +405,11 @@ print(ubg7.2)
 
 bv2 = as.numeric(unlist(train3.2 %>% select(batch)))
 y2 = as.numeric(unlist(Y2))
-cor(y2, bv2)
-# [1] 0.8
-cor(svobj2$sv, bv2)
-# [1] 0.988995
+acos(abs(cor(y2, bv2)))/pi * 180
+# [1] 69.7321
+acos(abs(cor(svobj2$sv, bv2)))/pi * 180
+# [1] 8.310695
+
 R.dir2 = R.pc2$dirDf
 R.cor2 = data.frame(PC = colnames(R.dir2), angle = acos(abs(cor(R.dir2, bv2)))/pi * 180 )
 

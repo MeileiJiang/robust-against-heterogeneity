@@ -25,10 +25,10 @@ library(reshape2)
 
 n = 80 # number of samples
 t1 = 20 # Feature 1 - t1 is only affected by primary variable + random noise 
-t2 = 40 # Feature t1 + 1 - t2 is affected by both primary variable and batch + random noise
-t3 = 60 # Feature t2 + 1 - t3 is only affected by batch + random noise
-t4 = 100 # Feature t3 + 1 - t4 is only random noise
-fe = factor(rep(c('y','y & batch','batch','noise'), c(t1, t2-t1, t3-t2, t4-t3)), 
+t2 = 20 # Feature t1 + 1 - t1 + t2 is affected by both primary variable and batch + random noise
+t3 = 20 # Feature t1 + t2 + 1 - t1 + t2 + t3 is only affected by batch + random noise
+t4 = 40 # Feature t1 + t2 + t3 + 1 - t1 + t2 + t3 + t4 is only random noise
+fe = factor(rep(c('y','y & batch','batch','noise'), c(t1, t2, t3, t4)), 
             levels = c('y','y & batch','batch','noise')) # lable of feature 
 # Balanced Case -----------------------------------------------------------
 pi_1 = 0.5; pi_2 = 0.5;
@@ -38,31 +38,32 @@ n_12 = 40 - n_11 # Samples in Class 1 from Batch 2
 n_21 = 40*pi_2 # Samples in Class 2 from Batch 1
 n_22 = 40 - n_21 # Samples in Class 2 from Batch 2
 
-M = matrix(nrow = n, ncol = t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
-colnames(M) = paste0('X', 1:t4)
-if(t1 > 0){
+M = matrix(nrow = n, ncol = t1 + t2 + t3 + t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
+colnames(M) = paste0('X', 1:(t1 + t2 + t3 + t4))
+if(t1 != 0){
   for(i in 1 : t1){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + rnorm(n, 0 ,1)
-  }
-}
-
-if(t2 > t1){
-  for(i in (t1 + 1) : t2){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + 
-      c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t3 > t2){
-  for(i in (t2 + 1) : t3){
-    M[,i] = c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+if(t2 != 0){
+  for(i in (t1 + 1) : (t1 + t2)){
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
+      rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
+      rnorm(n, 0, 1)
+  }
+}
+
+if(t3 != 0){
+  for(i in (t1 + t2 + 1):(t1 + t2 + t3)){
+    M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t4 > t3){
-  for(i in (t3 + 1) : t4){
+if(t4 != 0){
+  for(i in (t1 + t2 + t3 + 1) : (t1 + t2 + t3 + t4)){
     M[,i] = rnorm(n, 0 ,1)
   }
 }
@@ -99,35 +100,37 @@ n_12 = 40 - n_11 # Samples in Class 1 from Batch 2
 n_21 = 40*pi_2 # Samples in Class 2 from Batch 1
 n_22 = 40 - n_21 # Samples in Class 2 from Batch 2
 
-M = matrix(nrow = n, ncol = t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
-colnames(M) = paste0('X', 1:t4)
+M = matrix(nrow = n, ncol = t1 + t2 + t3 + t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
+colnames(M) = paste0('X', 1:(t1 + t2 + t3 + t4))
 
-if(t1 > 0){
+if(t1 != 0){
   for(i in 1 : t1){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + rnorm(n, 0 ,1)
-  }
-}
-
-if(t2 > t1){
-  for(i in (t1 + 1) : t2){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + 
-      c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t3 > t2){
-  for(i in (t2 + 1) : t3){
-    M[,i] = c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+if(t2 != 0){
+  for(i in (t1 + 1) : (t1 + t2)){
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
+      rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
+      rnorm(n, 0, 1)
+  }
+}
+
+if(t3 != 0){
+  for(i in (t1 + t2 + 1) : (t1 + t2 + t3)){
+    M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t4 > t3){
-  for(i in (t3 + 1) : t4){
+if(t4 != 0){
+  for(i in (t1 + t2 + t3 + 1) : (t1 + t2 + t3 + t4)){
     M[,i] = rnorm(n, 0 ,1)
   }
 }
+
 
 batch = rep(c('Batch1', 'Batch2', 'Batch1', 'Batch2'), c(n_11, n_12, n_21, n_22) ) 
 train1.1 = data.frame(y, M, batch, pi_1, pi_2)
@@ -150,32 +153,33 @@ n_12 = 40 - n_11 # Samples in Class 1 from Batch 2
 n_21 = 40*pi_2 # Samples in Class 2 from Batch 1
 n_22 = 40 - n_21 # Samples in Class 2 from Batch 2
 
-M = matrix(nrow = n, ncol = t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
-colnames(M) = paste0('X', 1:t4)
+M = matrix(nrow = n, ncol = t1 + t2 + t3 + t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
+colnames(M) = paste0('X', 1:(t1 + t2 + t3 + t4))
 
-if(t1 > 0){
+if(t1 != 0){
   for(i in 1 : t1){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + rnorm(n, 0 ,1)
-  }
-}
-
-if(t2 > t1){
-  for(i in (t1 + 1) : t2){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + 
-      c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t3 > t2){
-  for(i in (t2 + 1) : t3){
-    M[,i] = c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+if(t2 != 0){
+  for(i in (t1 + 1) : (t1 + t2)){
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
+      rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
+      rnorm(n, 0, 1)
+  }
+}
+
+if(t3 != 0){
+  for(i in (t1 + t2 + 1) : (t1 + t2 + t3)){
+    M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t4 > t3){
-  for(i in (t3 + 1) : t4){
+if(t4 != 0){
+  for(i in (t1 + t2 + t3 + 1) : (t1 + t2 + t3 + t4)){
     M[,i] = rnorm(n, 0 ,1)
   }
 }
@@ -208,32 +212,33 @@ n_12 = 40 - n_11 # Samples in Class 1 from Batch 2
 n_21 = 40*pi_2 # Samples in Class 2 from Batch 1
 n_22 = 40 - n_21 # Samples in Class 2 from Batch 2
 
-M = matrix(nrow = n, ncol = t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
-colnames(M) = paste0('X', 1:t4)
+M = matrix(nrow = n, ncol = t1 + t2 + t3 + t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
+colnames(M) = paste0('X', 1:(t1 + t2 + t3 + t4))
 
-if(t1 > 0){
+if(t1 != 0){
   for(i in 1 : t1){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + rnorm(n, 0 ,1)
-  }
-}
-
-if(t2 > t1){
-  for(i in (t1 + 1) : t2){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + 
-      c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t3 > t2){
-  for(i in (t2 + 1) : t3){
-    M[,i] = c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+if(t2 != 0){
+  for(i in (t1 + 1) : (t1 + t2)){
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
+      rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
+      rnorm(n, 0, 1)
+  }
+}
+
+if(t3 != 0){
+  for(i in (t1 + t2 + 1) : (t1 + t2 + t3)){
+    M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t4 > t3){
-  for(i in (t3 + 1) : t4){
+if(t4 != 0){
+  for(i in (t1 + t2 + t3 + 1) : (t1 + t2 + t3 + t4)){
     M[,i] = rnorm(n, 0 ,1)
   }
 }
@@ -259,35 +264,37 @@ n_12 = 40 - n_11 # Samples in Class 1 from Batch 2
 n_21 = 40*pi_2 # Samples in Class 2 from Batch 1
 n_22 = 40 - n_21 # Samples in Class 2 from Batch 2
 
-M = matrix(nrow = n, ncol = t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
-colnames(M) = paste0('X', 1:t4)
+M = matrix(nrow = n, ncol = t1 + t2 + t3 + t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
+colnames(M) = paste0('X', 1:(t1 + t2 + t3 + t4))
 
-if(t1 > 0){
+if(t1 != 0){
   for(i in 1 : t1){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + rnorm(n, 0 ,1)
-  }
-}
-
-if(t2 > t1){
-  for(i in (t1 + 1) : t2){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + 
-      c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t3 > t2){
-  for(i in (t2 + 1) : t3){
-    M[,i] = c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+if(t2 != 0){
+  for(i in (t1 + 1) : (t1 + t2)){
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
+      rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
+      rnorm(n, 0, 1)
+  }
+}
+
+if(t3 != 0){
+  for(i in (t1 + t2 + 1) : (t1 + t2 + t3)){
+    M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t4 > t3){
-  for(i in (t3 + 1) : t4){
+if(t4 != 0){
+  for(i in (t1 + t2 + t3 + 1) : (t1 + t2 + t3 + t4)){
     M[,i] = rnorm(n, 0 ,1)
   }
 }
+
 
 batch = rep(c('Batch1', 'Batch2', 'Batch1', 'Batch2'), c(n_11, n_12, n_21, n_22) ) 
 train2.2 = data.frame(y, M, batch, pi_1, pi_2)
@@ -316,35 +323,37 @@ n_12 = 40 - n_11 # Samples in Class 1 from Batch 2
 n_21 = 40*pi_2 # Samples in Class 2 from Batch 1
 n_22 = 40 - n_21 # Samples in Class 2 from Batch 2
 
-M = matrix(nrow = n, ncol = t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
-colnames(M) = paste0('X', 1:t4)
+M = matrix(nrow = n, ncol = t1 + t2 + t3 + t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
+colnames(M) = paste0('X', 1:(t1 + t2 + t3 + t4))
 
-if(t1 > 0){
+if(t1 != 0){
   for(i in 1 : t1){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + rnorm(n, 0 ,1)
-  }
-}
-
-if(t2 > t1){
-  for(i in (t1 + 1) : t2){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + 
-      c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t3 > t2){
-  for(i in (t2 + 1) : t3){
-    M[,i] = c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+if(t2 != 0){
+  for(i in (t1 + 1) : (t1 + t2)){
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
+      rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
+      rnorm(n, 0, 1)
+  }
+}
+
+if(t3 != 0){
+  for(i in (t1 + t2 + 1) : (t1 + t2 + t3)){
+    M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t4 > t3){
-  for(i in (t3 + 1) : t4){
+if(t4 != 0){
+  for(i in (t1 + t2 + t3 + 1) : (t1 + t2 + t3 + t4)){
     M[,i] = rnorm(n, 0 ,1)
   }
 }
+
 
 batch = rep(c('Batch1', 'Batch2', 'Batch1', 'Batch2'), c(n_11, n_12, n_21, n_22) ) 
 train3.1 = data.frame(y, M, batch, pi_1, pi_2)
@@ -367,32 +376,33 @@ n_12 = 40 - n_11 # Samples in Class 1 from Batch 2
 n_21 = 40*pi_2 # Samples in Class 2 from Batch 1
 n_22 = 40 - n_21 # Samples in Class 2 from Batch 2
 
-M = matrix(nrow = n, ncol = t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
-colnames(M) = paste0('X', 1:t4)
+M = matrix(nrow = n, ncol = t1 + t2 + t3 + t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
+colnames(M) = paste0('X', 1:(t1 + t2 + t3 + t4))
 
-if(t1 > 0){
+if(t1 != 0){
   for(i in 1 : t1){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + rnorm(n, 0 ,1)
-  }
-}
-
-if(t2 > t1){
-  for(i in (t1 + 1) : t2){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + 
-      c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t3 > t2){
-  for(i in (t2 + 1) : t3){
-    M[,i] = c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+if(t2 != 0){
+  for(i in (t1 + 1) : (t1 + t2)){
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
+      rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
+      rnorm(n, 0, 1)
+  }
+}
+
+if(t3 != 0){
+  for(i in (t1 + t2 + 1) : (t1 + t2 + t3)){
+    M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t4 > t3){
-  for(i in (t3 + 1) : t4){
+if(t4 != 0){
+  for(i in (t1 + t2 + t3 + 1) : (t1 + t2 + t3 + t4)){
     M[,i] = rnorm(n, 0 ,1)
   }
 }
@@ -424,35 +434,37 @@ n_12 = 40 - n_11 # Samples in Class 1 from Batch 2
 n_21 = 40*pi_2 # Samples in Class 2 from Batch 1
 n_22 = 40 - n_21 # Samples in Class 2 from Batch 2
 
-M = matrix(nrow = n, ncol = t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
-colnames(M) = paste0('X', 1:t4)
+M = matrix(nrow = n, ncol = t1 + t2 + t3 + t4) # In the data matrix M, samples are in the rows and feasures are in the columns. 
+colnames(M) = paste0('X', 1:(t1 + t2 + t3 + t4))
 
-if(t1 > 0){
+if(t1 != 0){
   for(i in 1 : t1){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + rnorm(n, 0 ,1)
-  }
-}
-
-if(t2 > t1){
-  for(i in (t1 + 1) : t2){
-    M[,i] = c(rep(2, 40), rep(-2, 40)) + 
-      c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t3 > t2){
-  for(i in (t2 + 1) : t3){
-    M[,i] = c(rnorm(n_11, 2, 1), rnorm(n_12, -2, 1), rnorm(n_21, 2, 1), rnorm(n_22, -2, 1)) + 
+if(t2 != 0){
+  for(i in (t1 + 1) : (t1 + t2)){
+    M[,i] = rep(c(2, -2), c(40, 40)) + 
+      rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
+      rnorm(n, 0, 1)
+  }
+}
+
+if(t3 != 0){
+  for(i in (t1 + t2 + 1) : (t1 + t2 + t3)){
+    M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
       rnorm(n, 0 ,1)
   }
 }
 
-if(t4 > t3){
-  for(i in (t3 + 1) : t4){
+if(t4 != 0){
+  for(i in (t1 + t2 + t3 + 1) : (t1 + t2 + t3 + t4)){
     M[,i] = rnorm(n, 0 ,1)
   }
 }
+
 
 batch = rep(c('Batch1', 'Batch2', 'Batch1', 'Batch2'), c(n_11, n_12, n_21, n_22) ) 
 train4 = data.frame(y, M, batch, pi_1, pi_2)
