@@ -5,9 +5,14 @@
 ## Author: Meilei Jiang
 ################################################################################
 library(ggplot2)
+library(reshape2)
 library(dplyr)
 library(sva)
 source('R/mean_heterogeneity/fixed_effects_mean_hetero_sva/Generate_mean_hetero_data.R')
+## parallel computing packages
+library(doMC)
+library(foreach)
+
 n = 80; # Total number of samples
 c1 = 40; # Total number of samples in the Class 1
 c2 = 40; # Total number of samples in the Class 2
@@ -54,65 +59,64 @@ g1 = ggplot(data = AngleDf, aes(x = pi_1, y = pi_2, fill = angle)) +
 # Angle between surrogate variable and batch vector
 ## To overcome the randomness in the simulation data, each case has been repeated 20 times
 
-AngleMat_sv <- matrix(ncol = 41, nrow = 41)
-AngleMat_y <- matrix(ncol = 41, nrow = 41)
 
-Zero_count <- matrix(0, ncol = 41, nrow = 41)
-for(i in 1:41){
-  for(j in 1:41){
-    tempcor_sv <- rep(NA, 20)
-    tempcor_y <- rep(NA, 20)
-    for(k in 1:20){
-      tempdata <- Generate_mean_hetero_data(pi_1 = (i-1)/40, pi_2 = (j-1)/40)
-      M <- tempdata %>% select(-y, -batch, -pi_1, -pi_2, -c1, -c2)
-      # Expression data
-      Edata <- t(M)
-      colnames(Edata) <- paste0("sample", c(1: dim(Edata)[2]))
-      
-      ## full model 
-      mod <- model.matrix(~ y, data = tempdata)
-      ## null model
-      mod0 <- model.matrix(~ 1, data = tempdata)
-      ## estimate the number of surrogate variable
-      n.sv <- num.sv(Edata, mod, method="be", B = 100)
-      ## estimate the surrogate varialbe
-      svobj <- sva(Edata, mod, mod0, n.sv= n.sv) 
-      ## get the surrogate variable
-      sv <- svobj$sv
-      ## get the batch vector
-      bv = as.numeric(unlist(tempdata %>% select(batch)))
-      y = as.numeric(unlist(tempdata %>% select(y)))
-      
-      if(length(sv) == 1){
-        Zero_count[i,j] <- Zero_count[i,j] + 1
-      } else{
-        if(sd(bv) == 0 | sd(sv) == 0){
-          tempcor_sv[k] <- 0
-        }else{
-          tempcor_sv[k] <- max(cor(sv,bv))
-        }
-        
-        tempcor_y[k] <- max(cor(sv,y))
+# parallel computing
+
+## set up the index
+
+n1 = 41 # number of pi_1
+n2 = 41 # number of pi_2
+indexdf = data.frame(outer=rep(1:n1,rep(n2,n1)),inner=rep(1:n2,n1))
+index = 1:nrow(indexdf)
+
+## set up parallel computing
+
+registerDoMC(10)
+
+Cor_sv_df = foreach(l = index, .combine = 'rbind') %:%
+  foreach(k = 1:20, .combine = 'rbind') %dopar%{
+    i <- indexdf[l,1]
+    j <- indexdf[l,2]
+    # Generate new data set 
+    tempdata <- Generate_mean_hetero_data(pi_1 = (i-1)/40, pi_2 = (j-1)/40)
+    M <- tempdata %>% select(-y, -batch, -pi_1, -pi_2, -c1, -c2)
+    # Expression data
+    Edata <- t(M)
+    colnames(Edata) <- paste0("sample", c(1: dim(Edata)[2]))
+    
+    ## full model 
+    mod <- model.matrix(~ y, data = tempdata)
+    ## null model
+    mod0 <- model.matrix(~ 1, data = tempdata)
+    ## estimate the number of surrogate variable
+    n.sv <- num.sv(Edata, mod, method="be", B = 100)
+    ## estimate the surrogate varialbe
+    svobj <- sva(Edata, mod, mod0, n.sv= n.sv) 
+    ## get the surrogate variable
+    sv <- svobj$sv
+    ## get the batch vector
+    bv = as.numeric(unlist(tempdata %>% select(batch)))
+    y = as.numeric(unlist(tempdata %>% select(y)))
+    
+    if(length(sv) == 1){
+      cor_sv_bv <- NA
+      cor_sv_y <- NA
+    }else{
+      if(sd(bv) == 0 | sd(sv) == 0){
+        cor_sv_bv <- 0
+      }else{
+        cor_sv_bv <- max(abs(cor(sv,bv)))
       }
+      
+      cor_sv_y <- max(abs(cor(sv,y)))
     }
-    AngleMat_sv[i,j] <- acos(abs(mean(tempcor_sv, na.rm = TRUE))) /pi * 180
-    AngleMat_y[i,j] <- acos(abs(mean(tempcor_y, na.rm = TRUE))) /pi * 180
+    data.frame(pi_1 = i, pi_2 = j, replicate = k, n.sv = n.sv, cor_sv_bv = cor_sv_bv, cor_sv_y = cor_sv_y)
   }
-}
 
-# save the computation result
-
-save(AngleMat_y, AngleMat_sv, Zero_count, file = 'rdata/angle_analysis.RData')
-
-# visulize the result
-
-Angle_sv_Df = melt(AngleMat_sv) %>%
-  rename(pi_1 = Var1, pi_2 = Var2, angle = value)
-
-g2 = ggplot(data = Angle_sv_Df, aes(x = pi_1, y = pi_2, fill = angle)) + 
+g2 = ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_bv) /pi * 180)) + 
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
-  labs(x = expression(pi[1]), y = expression(pi[2]), 
+  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
        title = expression(atop("Angle Between Surrogate Variable and Batch Vector", 
                                atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
                                     "")))) +
@@ -122,14 +126,10 @@ g2 = ggplot(data = Angle_sv_Df, aes(x = pi_1, y = pi_2, fill = angle)) +
   geom_text(x = 1, y = 1, label ="O", col = "black") +
   geom_text(x = 41, y = 41, label = "O", col = "black")
 
-
-Angle_y_Df = melt(AngleMat_y) %>%
-  rename(pi_1 = Var1, pi_2 = Var2, angle = value)
-
-g3 = ggplot(data = Angle_y_Df, aes(x = pi_1, y = pi_2, fill = angle)) + 
+g3 = ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_y) /pi * 180)) + 
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
-  labs(x = expression(pi[1]), y = expression(pi[2]), 
+  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
        title = expression(atop("Angle Between Surrogate Variable and Class Vector", 
                                atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
                                     "")))) +
@@ -138,6 +138,13 @@ g3 = ggplot(data = Angle_y_Df, aes(x = pi_1, y = pi_2, fill = angle)) +
   geom_text(x = 21, y = 21, label = "X", col = "red") +
   geom_text(x = 1, y = 1, label ="O", col = "black") +
   geom_text(x = 41, y = 41, label = "O", col = "black")
+
+# save the computation result
+
+save(Cor_sv_df, file = 'rdata/angle_analysis2.RData')
+
+
+
 
 # output the figures
 
