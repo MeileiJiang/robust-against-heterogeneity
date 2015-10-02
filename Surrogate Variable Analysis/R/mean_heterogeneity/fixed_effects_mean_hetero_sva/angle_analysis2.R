@@ -4,6 +4,10 @@
 ## angle between PC1 and batch vector and the angle between PC1 and data.
 ## Author: Meilei
 ###################################################################################################
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+
 
 # f1 is the correlation coefficient between PC1 and Batch vector under different balanced settings
 # This is derived theoretically.
@@ -28,18 +32,20 @@ CorDf = melt(CorMat) %>%
   rename(pi_1 = Var1, pi_2 = Var2, Cor = value) %>%
   mutate(angle = acos(Cor)/pi * 180)
 
-ggplot(data = CorDf, aes(x = pi_1, y = pi_2, fill = angle)) + 
+g1 = ggplot(data = CorDf, aes(x = pi_1, y = pi_2, fill = angle)) + 
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
   labs(x= expression(pi[1]), y = expression(pi[2]), fill = 'angle',
        title = expression(atop("Angle Between PC1 and Batch Vector", 
                                atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    "")))) +
+                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
   scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
   scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  geom_text(x = 21, y = 21, label = "X", col = "red") +
-  geom_text(x = 1, y = 1, label ="O", col = "black") +
-  geom_text(x = 41, y = 41, label = "O", col = "black") 
+  geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
+  geom_text(x = 1, y = 1, label ="O", col = "black", size = 2) +
+  geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
+  geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
+  geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
 
 # f2 is the correlation coefficient between PC1 and Data under different balanced settings
 # This is derived theoretically.
@@ -64,15 +70,26 @@ CorDf1 = melt(CorMat1) %>%
   rename(pi_1 = Var1, pi_2 = Var2, Cor = value) %>%
   mutate(angle = acos(Cor)/pi * 180)
 
-ggplot(data = CorDf1, aes(x = pi_1, y = pi_2, fill = angle)) + 
+g2 = ggplot(data = CorDf1, aes(x = pi_1, y = pi_2, fill = angle)) + 
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
   labs(x= expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between PC1 and Data", 
+       title = expression(atop("Angle Between PC1 and Gene with both batch effects and class effects", 
                                atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    "")))) +
+                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
   scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
   scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  geom_text(x = 21, y = 21, label = "X", col = "red") +
-  geom_text(x = 1, y = 1, label ="O", col = "black") +
-  geom_text(x = 41, y = 41, label = "O", col = "black") 
+  geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
+  geom_text(x = 1, y = 1, label ="O", col = "black", size = 2) +
+  geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
+  geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
+  geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
+
+pdf('figures/mean_heterogeneity/angle/angle_pc1_bv.pdf')
+print(g1)
+dev.off()
+
+pdf('figures/mean_heterogeneity/angle/angle_pc1_x.pdf')
+print(g2)
+dev.off()
+
