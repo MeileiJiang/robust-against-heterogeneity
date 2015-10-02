@@ -95,8 +95,13 @@ Cor_sv_df = foreach(l = index, .combine = 'rbind') %:%
     ## get the surrogate variable
     sv <- svobj$sv
     ## get the batch vector
+<<<<<<< HEAD
     bv = 2 - as.numeric(unlist(tempdata %>% select(batch)))
     y = 2 - as.numeric(unlist(tempdata %>% select(y)))
+=======
+    bv = as.numeric(unlist(tempdata %>% select(batch)))
+    y = as.numeric(unlist(tempdata %>% select(y)))
+>>>>>>> 12e3d54d0bc482013305553c0f66297710e7b53e
     
     if(length(sv) == 1){
       cor_sv_bv <- NA
@@ -112,6 +117,7 @@ Cor_sv_df = foreach(l = index, .combine = 'rbind') %:%
     }
     data.frame(pi_1 = i, pi_2 = j, replicate = k, n.sv = n.sv, cor_sv_bv = cor_sv_bv, cor_sv_y = cor_sv_y)
   }
+<<<<<<< HEAD
 
 Cor_sv_df <- Cor_sv_df %>%
   mutate(diff_cor = cor_sv_bv - cor_sv_y)
@@ -149,6 +155,10 @@ mean_Cor_sv_df <- Cor_sv_df %>%
   summarise(mean_cor_sv_bv = mean(cor_sv_bv), mean_cor_sv_y = mean(cor_sv_y))
 
 ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(mean_cor_sv_bv) /pi * 180)) + 
+=======
+
+g2 = ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_bv) /pi * 180)) + 
+>>>>>>> 12e3d54d0bc482013305553c0f66297710e7b53e
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
   labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
@@ -161,6 +171,7 @@ ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(mean_cor_sv_bv
   geom_text(x = 1, y = 1, label ="O", col = "black") +
   geom_text(x = 41, y = 41, label = "O", col = "black")
 
+<<<<<<< HEAD
 ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(mean_cor_sv_bv - mean_cor_sv_y) /pi * 180)) + 
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
@@ -211,6 +222,13 @@ ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_bv) /pi * 18
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
   labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
        title = expression(atop("Angle Between Surrogate Variable and Batch Vector", 
+=======
+g3 = ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_y) /pi * 180)) + 
+  geom_tile() +
+  scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
+  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
+       title = expression(atop("Angle Between Surrogate Variable and Class Vector", 
+>>>>>>> 12e3d54d0bc482013305553c0f66297710e7b53e
                                atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
                                     "")))) +
   scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
@@ -218,6 +236,13 @@ ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_bv) /pi * 18
   geom_text(x = 21, y = 21, label = "X", col = "red") +
   geom_text(x = 1, y = 1, label ="O", col = "black") +
   geom_text(x = 41, y = 41, label = "O", col = "black")
+# save the computation result
+
+save(Cor_sv_df, file = 'rdata/angle_analysis2.RData')
+
+
+
+
 # save the computation result
 
 save(Cor_sv_df, file = 'rdata/angle_analysis2.RData')
