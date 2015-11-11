@@ -5,7 +5,7 @@
 #####################################################################################
 library(dplyr)
 
-Generate_mean_hetero_data = function(pi_1, pi_2, c1 = 40, c2 = 40, t = c(20, 20, 20, 40)){
+Generate_mean_hetero_data = function(pi_1, pi_2, c1 = 40, c2 = 40, t = c(20, 20, 20, 40), noise = 1){
   # c1 is the size of Class 1
   # c2 is the size of Class 2
   n = c1 + c2;
@@ -21,7 +21,7 @@ Generate_mean_hetero_data = function(pi_1, pi_2, c1 = 40, c2 = 40, t = c(20, 20,
   if(t[1] > 0){
     for(i in 1 : t[1]){
       M[,i] = rep(c(2, -2), c(40, 40)) + 
-        rnorm(n, 0 ,1)
+        rnorm(n, 0 , noise)
     }
   }
   
@@ -29,20 +29,20 @@ Generate_mean_hetero_data = function(pi_1, pi_2, c1 = 40, c2 = 40, t = c(20, 20,
     for(i in (t[1] + 1) : sum(t[1:2])){
       M[,i] = rep(c(2, -2), c(40, 40)) + 
         rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
-        rnorm(n, 0, 1)
+        rnorm(n, 0, noise)
     }
   }
   
   if(t[3] > 0){
     for(i in (sum(t[1:2]) + 1) : sum(t[1:3])){
       M[,i] = rep(c(2,-2, 2,-2), c(n_11, n_12, n_21, n_22)) + 
-        rnorm(n, 0 ,1)
+        rnorm(n, 0 , noise)
     }
   }
   
   if(t[4] > 0){
     for(i in (sum(t[1:3]) + 1) : sum(t[1:4])){
-      M[,i] = rnorm(n, 0 ,1)
+      M[,i] = rnorm(n, 0 , noise)
     }
   }
   

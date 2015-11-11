@@ -56,7 +56,7 @@ f2 = function(pi_1, pi_2){
   if((pi_1 + pi_2 - pi_1^2 - pi_2^2) == 0){
     return(0)
   }
-  return(sqrt(2 * (pi_1 + pi_2 - pi_1^2 - pi_2^2)/(pi_1 + 1 - pi_2 -(1 - pi_1 - pi_2)^2/2)))
+  return(sqrt((pi_1 + pi_2 - pi_1^2 - pi_2^2)/(pi_1 + 1 - pi_2 -(1 - pi_1 - pi_2)^2/2)))
 }
 
 CorMat1 = matrix(ncol = 41, nrow = 41)

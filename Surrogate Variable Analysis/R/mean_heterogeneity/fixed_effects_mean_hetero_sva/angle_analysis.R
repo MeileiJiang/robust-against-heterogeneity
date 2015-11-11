@@ -132,7 +132,7 @@ Cor_sv_df = foreach(l = index, .combine = 'rbind') %:%
   }
 
 Cor_sv_df <- Cor_sv_df %>%
-  mutate(diff_cor = cor_sv_bv - cor_sv_y )
+  mutate(diff_cor = cor_sv_bv - cor_bv_pc1 )
 
 g2 = ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_bv) /pi * 180)) + 
   geom_tile() +
@@ -223,6 +223,28 @@ g7 <- ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_y) /pi
   geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
   geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
   geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
+
+
+g8 <- ggplot(data = Cor_sv_df, 
+       aes(x = pi_1, y = pi_2, 
+          fill = (acos(cor_sv_bv) - acos(abs(cor_bv_pc1)) )/pi * 180)) +
+  geom_tile() + 
+  scale_fill_gradient2(breaks =c(-9:9)*10, limits=c(-90, 90),
+                       high = "red", mid = 'white', low = "blue") +
+  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
+       title = expression(atop("Angle Difference Between Surrogate Variable And PC1 With Batch Vector", 
+                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
+                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
+  scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
+  scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
+  geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
+  geom_text(x = 1, y = 1, label ="O", col = "black", size = 2) +
+  geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
+  geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
+  geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
+  
+
+
 
 # Try to understand why the upper left corner is darker than the lower right corner.
 
@@ -345,5 +367,9 @@ dev.off()
 
 pdf(file = 'figures/mean_heterogeneity/angle/angle_sv_y.pdf')
 print(g7)
+dev.off()
+
+pdf(file = 'figures/mean_heterogeneity/angle/comp_sv_pc1.pdf')
+print(g8)
 dev.off()
 
