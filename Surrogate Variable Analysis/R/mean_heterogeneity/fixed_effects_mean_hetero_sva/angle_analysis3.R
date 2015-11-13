@@ -16,7 +16,7 @@ library(foreach)
 n = 80; # Total number of samples
 c1 = 40; # Total number of samples in the Class 1
 c2 = 40; # Total number of samples in the Class 2
-t = c(20, 0, 20, 60) # Settings of features
+t = c(20, 20, 0, 60) # Settings of features
 
 # Angle between batch vector and primary variable vector
 Angle_bv_y = function(pi_1, pi_2){
@@ -334,7 +334,7 @@ ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(mean_cor_y_pc1
 
 # save the computation result
 
-save(Cor_sv_df, file = 'rdata/angle_analysis2.RData')
+save(Cor_sv_df, file = 'rdata/angle_analysis3.RData')
 
 
 
@@ -345,11 +345,11 @@ pdf(file = 'figures/mean_heterogeneity/angle/angle_y_bv.pdf')
 print(g1)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_sv_bv_2.pdf')
+pdf(file = 'figures/mean_heterogeneity/angle/angle_sv_bv_3.pdf')
 print(g2)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_bv_pc1_2.pdf')
+pdf(file = 'figures/mean_heterogeneity/angle/angle_bv_pc1_3.pdf')
 print(g3)
 dev.off()
 
