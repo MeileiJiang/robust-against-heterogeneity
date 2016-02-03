@@ -1,0 +1,102 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Thin Formal Letter
+% LaTeX Template
+% Version 1.11 (8/12/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% Original author:
+% WikiBooks (http://en.wikibooks.org/wiki/LaTeX/Letters)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass{letter}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{enumitem}
+\usepackage{mdwlist}
+\usepackage{bbm}
+\usepackage{ulem}
+\usepackage{array}
+\usepackage{parskip}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% Adjust margins for aesthetics
+\addtolength{\voffset}{-0.5in}
+\addtolength{\hoffset}{-0.3in}
+\addtolength{\textheight}{2cm}
+
+%\longindentation=0pt % Un-commenting this line will push the closing "Sincerely," to the left of the page
+
+%----------------------------------------------------------------------------------------
+%	YOUR NAME & ADDRESS SECTION
+%----------------------------------------------------------------------------------------
+
+\signature{Meilei Jiang} % Your name for the signature at the bottom
+
+\address{Hanes Hall, B44 \\ 
+              Chapel Hill, NC 27510 \\
+              (919) 265-9114} % Your address and phone number
+
+%----------------------------------------------------------------------------------------
+
+\begin{document}
+
+%----------------------------------------------------------------------------------------
+%	ADDRESSEE SECTION
+%----------------------------------------------------------------------------------------
+
+\begin{letter}{Johns Hopkins University \\
+                     Bloomberg School of Public Health \\ 
+                     Office E3624 \\ 
+                     615 North Wolfe Street  \\ 
+                     Baltimore, MD 21205} % Name/title of the addressee
+
+%----------------------------------------------------------------------------------------
+%	LETTER CONTENT SECTION
+%----------------------------------------------------------------------------------------
+
+\opening{\textbf{Dear Prof Leek},}
+ 
+I am Meilei Jiang, a third year Phd student in statistics at UNC Chapel Hill, currently working with Steve Marron. Recently I am doing research on adjusting for batch effects in high dimensional data. I have read your papers and I quite like your approach, Surrogate Variable Analysis(SVA), as a method for batch correction and for addressing the data heterogeneity in the context of multiple testing dependence. However, I am quite puzzled by one aspect of SVA and wonder whether you can explain the reason behind your choice. My modification seems simpler and better than the published version, so I wonder if I am missing something.
+
+In particular, I think we can improve the performance of SVA by modifying one step: weighting the residual matrix $R$ by the probability $\text{Pr}( \gamma_i \neq \vec{0}| X, S, \hat{G})$ instead of weighting the data matrix $X$ by the probability $\text{Pr}(b_i = \vec{0} \text{ } \& \text{ } \gamma_i \neq \vec{0} | X, S, \hat{G})$.
+
+Based on a simple simulation study, this new approach to SVA improves the performance of IRW-SVA in the case that there exist no genes (variables) which are strongly associated with unmeasured confounders but are not associated with measured factors. The two approaches have similar performance when such a subset exists. 
+
+The simulation study is conducted using your package 'sva' in the R software. You can find the simulation study results in the attachment.
+
+
+Thank you for your time and consideration.
+
+I look forward to your reply.
+
+\vspace{2\parskip} % Extra whitespace for aesthetics
+\closing{Sincerely,}
+\vspace{2\parskip} % Extra whitespace for aesthetics
+
+%\ps{P.S. You can find additional information attached to this letter.} % Postscript text, comment this line to remove it
+
+%\encl{Copyright permission form} % Enclosures with the letter, comment this line to remove it
+
+
+
+
+%----------------------------------------------------------------------------------------
+
+\end{letter}
+
+ 
+\end{document}

@@ -10,7 +10,7 @@ library(sva)
 
 source('R/mean_heterogeneity/fixed_effects_mean_hetero_sva/Generate_mean_hetero_data.R')
 source('R/modifiedSVA/newirwsva.R')
-
+source('R/modifiedSVA/helper.R')
 
 # Privous research shows that IRW-SVA could be problematic at the case when the data has no genes only
 # affected by batches.
@@ -18,7 +18,7 @@ source('R/modifiedSVA/newirwsva.R')
 n = 80; # Total number of samples
 c1 = 40; # Total number of samples in the Class 1
 c2 = 40; # Total number of samples in the Class 2
-t = c(20, 20, 20, 40) # Settings of features
+t = c(0, 50, 0, 50) # Settings of features
 
 tempdata <- Generate_mean_hetero_data(pi_1 = 0.5, pi_2 = 0.5, t = t)
 M <- tempdata %>% select(-y, -batch, -pi_1, -pi_2, -c1, -c2)
@@ -30,12 +30,12 @@ colnames(Edata) <- paste0("sample", c(1: dim(Edata)[2]))
 Mdata = melt(Edata)
 
 gg0 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value", title = 'Original Simulation data') +
+  labs(x = "Sample", y = "Gene", fill = "Value", title = 'Original Simulation Data Set') +
   geom_tile() + 
   scale_fill_gradient2() +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
-pdf(file = 'figures/Modified_SVA/simulate0.pdf', width = 8)
+pdf(file = 'figures/Modified_SVA/simulate4.pdf', width = 8, height = 8)
 print(gg0)
 dev.off()
 
@@ -94,14 +94,17 @@ gg1 = ggplot(data = rgenes, aes(x = index, y = value, col = type)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
 
-pdf(file = 'figures/Modified_SVA/pprop0.pdf', width = 8)
+pdf(file = 'figures/Modified_SVA/pprop4.pdf', width = 8, height = 8)
 print(gg1)
 dev.off()
 ## get the surrogate variable
 sv <- svobj$sv
 sv2 <- svobj2$sv
 
-vectors = data.frame('batch' = bv, 'pc1' = pc1, 'sv' = sv, 'new-sv' = sv2, 
+# vectors = data.frame('batch' = bv, 'pc1' = pc1, 'sv' = sv, 'new-sv' = sv2, 
+#                      sample = c(1:80) )
+
+vectors = data.frame('batch' = bv, 'sv' = sv, 'new-sv' = sv2, 
                      sample = c(1:80) )
 
 mvectors = melt(vectors, id.vars = c('batch','sample'))
@@ -109,12 +112,12 @@ mvectors = melt(vectors, id.vars = c('batch','sample'))
 gg2 = ggplot(data = mvectors, aes(x = sample, y = value, col = as.factor(batch)) ) +
   facet_wrap(~variable) +
   geom_point() +
-  labs(x= 'Sample', y='value', col = 'batch',
+  labs(x= 'Sample', y='Value', col = 'Batch',
        title = 'Comparison of Surrogate Variables') +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
 
-pdf(file = 'figures/Modified_SVA/vector0.pdf', width = 8)
+pdf(file = 'figures/Modified_SVA/vector4.pdf', width = 8, height = 8)
 print(gg2)
 dev.off()  
 
@@ -136,15 +139,15 @@ gg3 = ggplot(Mdb, aes(x = Var2, y = Var1, fill = value)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
 gg4 = ggplot(Mdb2, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value",title = "Remove Batch Effect through modifed SVA") +
+  labs(x = "Sample", y = "Gene", fill = "Value",title = "Remove Batch Effect through modified SVA") +
   geom_tile() + 
   scale_fill_gradient2() +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
-pdf(file = 'figures/Modified_SVA/sva0.pdf', width = 8)
+pdf(file = 'figures/Modified_SVA/sva4.pdf', width = 8, height = 8)
 print(gg3)
 dev.off()
 
-pdf(file = 'figures/Modified_SVA/new_sva0.pdf', width = 8)
+pdf(file = 'figures/Modified_SVA/new_sva4.pdf', width = 8, height = 8)
 print(gg4)
 dev.off()
