@@ -18,7 +18,7 @@ source('R/modifiedSVA/helper.R')
 n = 80; # Total number of samples
 c1 = 40; # Total number of samples in the Class 1
 c2 = 40; # Total number of samples in the Class 2
-t = c(0, 50, 0, 50) # Settings of features
+t = c(20, 20, 20, 40) # Settings of features
 
 tempdata <- Generate_mean_hetero_data(pi_1 = 0.5, pi_2 = 0.5, t = t)
 M <- tempdata %>% select(-y, -batch, -pi_1, -pi_2, -c1, -c2)
@@ -32,10 +32,10 @@ Mdata = melt(Edata)
 gg0 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value", title = 'Original Simulation Data Set') +
   geom_tile() + 
-  scale_fill_gradient2() +
+  scale_fill_gradient2(limits=c(-8, 8)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
-pdf(file = 'figures/Modified_SVA/simulate4.pdf', width = 8, height = 8)
+pdf(file = 'figures/Modified_SVA/simulate0.pdf', width = 8, height = 8)
 print(gg0)
 dev.off()
 
@@ -83,14 +83,14 @@ plot(svobj2$pprob.b)
 
 genes = data.frame(sva.pprob.gam = svobj$pprob.gam, sva.pprob.b = svobj$pprob.b, 
                    newsva.pprob.gam = svobj2$pprob.gam, newsva.pprob.b = svobj2$pprob.b, 
-                   type = rep(c('y','batch&y', 'batch', 'noise'), t), index = c(1:100))
+                   type = rep(c('Type A: b','Type C: b & gam', 'Type B: gam', 'Type D'), t), index = c(1:100))
 rgenes = melt(genes, id.vars = c('type','index'))
- 
+rgenes$variable = factor(rgenes$variable, levels = c('sva.pprob.gam','newsva.pprob.gam', 'sva.pprob.b', 'newsva.pprob.b')) 
 gg1 = ggplot(data = rgenes, aes(x = index, y = value, col = type)) +
   facet_wrap(~variable) +
   geom_point() +
-  labs(x= 'Gene', y='probablity', 
-       title = 'Emprical Bayes Estimates of Posteriori Probability for gamma and b') +
+  labs(x= 'Gene', y='probablity', col = 'Gene Type',
+       title = 'Posteriori probability for gamma and b') +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
 
@@ -135,19 +135,19 @@ Mdb2 = melt(Edb2)
 gg3 = ggplot(Mdb, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value",title = "Remove Batch Effect through IRW-SVA") +
   geom_tile() + 
-  scale_fill_gradient2() +
+  scale_fill_gradient2(limits=c(-8, 8)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
 gg4 = ggplot(Mdb2, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value",title = "Remove Batch Effect through modified SVA") +
   geom_tile() + 
-  scale_fill_gradient2() +
+  scale_fill_gradient2(limits=c(-8, 8)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
-pdf(file = 'figures/Modified_SVA/sva4.pdf', width = 8, height = 8)
+pdf(file = 'figures/Modified_SVA/sva0.pdf', width = 8, height = 8)
 print(gg3)
 dev.off()
 
-pdf(file = 'figures/Modified_SVA/new_sva4.pdf', width = 8, height = 8)
+pdf(file = 'figures/Modified_SVA/new_sva0.pdf', width = 8, height = 8)
 print(gg4)
 dev.off()
