@@ -1,6 +1,7 @@
 ###########################################################################
-## ModifiedSVA.R
+## ModifiedSVA_Case1.R
 ## This file is written to understand the behavior of ModifiedSVA
+## Case 1: The data set does not contains genes with batch label not with class label signal.
 ## Author: Meilei
 ###########################################################################
 library(ggplot2)
@@ -18,7 +19,7 @@ source('R/modifiedSVA/helper.R')
 n = 80; # Total number of samples
 c1 = 40; # Total number of samples in the Class 1
 c2 = 40; # Total number of samples in the Class 2
-t = c(20, 20, 20, 40) # Settings of features
+t = c(0, 50, 0, 50) # Settings of features
 
 tempdata <- Generate_mean_hetero_data(pi_1 = 0.5, pi_2 = 0.5, t = t)
 M <- tempdata %>% select(-y, -batch, -pi_1, -pi_2, -c1, -c2)
@@ -35,7 +36,7 @@ gg0 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
   scale_fill_gradient2(limits=c(-8, 8)) +
   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
 
-pdf(file = 'figures/Modified_SVA/simulate0.pdf', width = 8, height = 8)
+pdf(file = 'figures/Modified_SVA/simulate1.pdf', width = 8, height = 8)
 print(gg0)
 dev.off()
 
@@ -81,21 +82,39 @@ plot(svobj$pprob.b)
 plot(svobj2$pprob.gam)
 plot(svobj2$pprob.b)
 
-genes = data.frame(sva.pprob.gam = svobj$pprob.gam, sva.pprob.b = svobj$pprob.b, 
-                   newsva.pprob.gam = svobj2$pprob.gam, newsva.pprob.b = svobj2$pprob.b, 
-                   type = rep(c('Type A: b','Type C: b & gam', 'Type B: gam', 'Type D'), t), index = c(1:100))
-rgenes = melt(genes, id.vars = c('type','index'))
-rgenes$variable = factor(rgenes$variable, levels = c('sva.pprob.gam','newsva.pprob.gam', 'sva.pprob.b', 'newsva.pprob.b')) 
-gg1 = ggplot(data = rgenes, aes(x = index, y = value, col = type)) +
+genes.pprob.gam = data.frame(irw_sva.pprob.gam = svobj$pprob.gam, new_sva.pprob.gam = svobj2$pprob.gam, 
+                             type = rep(c('Type A: b','Type C: b & gam', 'Type B: gam', 'Type D'), t), index = c(1:100))
+genes.pprob.b = data.frame(irw_sva.pprob.b = svobj$pprob.b, new_sva.pprob.b = svobj2$pprob.b, 
+                           type = rep(c('Type A: b','Type C: b & gam', 'Type B: gam', 'Type D'), t), index = c(1:100))
+mgenes.pprob.gam = melt(genes.pprob.gam, id.vars = c('type','index'))
+mgenes.pprob.gam$variable = factor(mgenes.pprob.gam$variable, levels = c('irw_sva.pprob.gam', 'new_sva.pprob.gam')) 
+mgenes.pprob.b = melt(genes.pprob.b, id.vars = c('type','index'))
+mgenes.pprob.b$variable = factor(mgenes.pprob.b$variable, levels = c('irw_sva.pprob.b', 'new_sva.pprob.b')) 
+
+gg1.1 = ggplot(data = mgenes.pprob.gam, aes(x = index, y = value, col = type)) +
   facet_wrap(~variable) +
   geom_point() +
   labs(x= 'Gene', y='probablity', col = 'Gene Type',
-       title = 'Posteriori probability for gamma and b') +
-  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+       title = expression(paste('Posterior probability of ', gamma != 0, ' for each gene'))) +
+  theme(plot.title = element_text(size = 20), axis.ticks = element_blank(), strip.text.x = element_text(size = 16),
+        axis.text.x = element_blank(), legend.position = 'bottom')
 
 
-pdf(file = 'figures/Modified_SVA/pprop4.pdf', width = 8, height = 8)
-print(gg1)
+pdf(file = 'figures/Modified_SVA/pprop1_1.pdf', width = 7, height = 6)
+print(gg1.1)
+dev.off()
+
+gg1.2 = ggplot(data = mgenes.pprob.b, aes(x = index, y = value, col = type)) +
+  facet_wrap(~variable) +
+  geom_point() +
+  labs(x= 'Gene', y='probablity', col = 'Gene Type',
+       title = expression(paste('Posterior probability of ', b != 0, ' for each gene'))) +
+  theme(plot.title = element_text(size = 20), axis.ticks = element_blank(), strip.text.x = element_text(size = 16),
+        axis.text.x = element_blank(), legend.position = 'bottom')
+
+
+pdf(file = 'figures/Modified_SVA/pprop1_2.pdf', width = 7, height = 6)
+print(gg1.2)
 dev.off()
 ## get the surrogate variable
 sv <- svobj$sv
@@ -104,7 +123,7 @@ sv2 <- svobj2$sv
 # vectors = data.frame('batch' = bv, 'pc1' = pc1, 'sv' = sv, 'new-sv' = sv2, 
 #                      sample = c(1:80) )
 
-vectors = data.frame('batch' = bv, 'sv' = sv, 'new-sv' = sv2, 
+vectors = data.frame('batch' = bv, 'sv' = sv, 'new_sv' = sv2, 
                      sample = c(1:80) )
 
 mvectors = melt(vectors, id.vars = c('batch','sample'))
@@ -114,10 +133,12 @@ gg2 = ggplot(data = mvectors, aes(x = sample, y = value, col = as.factor(batch))
   geom_point() +
   labs(x= 'Sample', y='Value', col = 'Batch',
        title = 'Comparison of Surrogate Variables') +
-  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+  theme(plot.title = element_text(size = 20), axis.ticks = element_blank(), strip.text.x = element_text(size = 16),
+        axis.text.x = element_blank(), legend.position = 'bottom')
 
 
-pdf(file = 'figures/Modified_SVA/vector4.pdf', width = 8, height = 8)
+
+pdf(file = 'figures/Modified_SVA/vector1.pdf', width = 7, height = 6)
 print(gg2)
 dev.off()  
 
@@ -136,18 +157,21 @@ gg3 = ggplot(Mdb, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value",title = "Remove Batch Effect through IRW-SVA") +
   geom_tile() + 
   scale_fill_gradient2(limits=c(-8, 8)) +
-  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+  theme(plot.title = element_text(size = 18), axis.ticks = element_blank(),
+        axis.text.x = element_blank())
 
 gg4 = ggplot(Mdb2, aes(x = Var2, y = Var1, fill = value)) +
   labs(x = "Sample", y = "Gene", fill = "Value",title = "Remove Batch Effect through modified SVA") +
   geom_tile() + 
   scale_fill_gradient2(limits=c(-8, 8)) +
-  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+  theme(plot.title = element_text(size = 18), axis.ticks = element_blank(),
+        axis.text.x = element_blank())
 
-pdf(file = 'figures/Modified_SVA/sva0.pdf', width = 8, height = 8)
+
+pdf(file = 'figures/Modified_SVA/sva1.pdf', width = 8, height = 8)
 print(gg3)
 dev.off()
 
-pdf(file = 'figures/Modified_SVA/new_sva0.pdf', width = 8, height = 8)
+pdf(file = 'figures/Modified_SVA/new_sva1.pdf', width = 8, height = 8)
 print(gg4)
 dev.off()

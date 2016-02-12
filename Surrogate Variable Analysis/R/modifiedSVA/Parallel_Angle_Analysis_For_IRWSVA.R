@@ -1,5 +1,5 @@
 ######################################################################################
-## Prallel_Angle_Analysis_For_IRWSVA.R
+## Parallel_Angle_Analysis_For_IRWSVA.R
 ## Analyze the angle between batch vector and primary variable under new gene settings
 ## 
 ## Author: Meilei Jiang
