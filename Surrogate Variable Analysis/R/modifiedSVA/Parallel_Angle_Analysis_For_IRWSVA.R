@@ -139,9 +139,7 @@ g2 = ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_bv) /pi
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
   labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between Surrogate Variable and Batch Vector", 
-                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
+       title = "Angles Between Surrogate Variable From IRW-SVA and Batch Label Vector") +
   scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
   scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
   geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
@@ -154,9 +152,7 @@ g3 <- ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(abs(cor_bv_pc
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
   labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between Batch Vector and PC1", 
-                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
+       title = "Angles Between Batch Label Vector and PC1") +
   scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
   scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
   geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
@@ -169,9 +165,7 @@ g4 <- ggplot(data = Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(cor_sv_pc1) /
   geom_tile() +
   scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
   labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between Surrogate Variable and PC1", 
-                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
+       title = "Angles Between Surrogate Variable From IRW-SVA and PC1") +
   scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
   scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
   geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
@@ -247,92 +241,6 @@ g8 <- ggplot(data = Cor_sv_df,
 
 
 
-# Try to understand why the upper left corner is darker than the lower right corner.
-
-mean_Cor_sv_df <- Cor_sv_df %>% 
-  group_by(pi_1, pi_2) %>%
-  summarise(mean_cor_sv_bv = mean(cor_sv_bv), mean_cor_sv_y = mean(cor_sv_y), mean_cor_sv_pc1 = mean(cor_sv_pc1),
-            mean_cor_y_pc1 = mean(abs(cor_y_pc1)), mean_cor_x_pc1 = mean(abs(cor_x_pc1)), mean_diff_cor = mean(diff_cor))
-
-ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(mean_cor_sv_bv) /pi * 180)) + 
-  geom_tile() +
-  scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
-  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between Surrogate Variable and Batch Vector", 
-                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
-  scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
-  geom_text(x = 1, y = 1, label ="O", col = "black", size = 2) +
-  geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
-  geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
-  geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
-
-ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(abs(mean_diff_cor)) /pi * 180)) + 
-  geom_tile() +
-  scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
-  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between Surrogate Variable and Class Vector", 
-                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
-  scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
-  geom_text(x = 1, y = 1, label ="O", col = "black", size = 2) +
-  geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
-  geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
-  geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
-
-
-ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(mean_cor_sv_pc1) /pi * 180)) + 
-  geom_tile() +
-  scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
-  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between Surrogate Variable and PC1", 
-                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
-  scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
-  geom_text(x = 1, y = 1, label ="O", col = "black", size = 2) +
-  geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
-  geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
-  geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
-
-
-ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(mean_cor_x_pc1) /pi * 180)) + 
-  geom_tile() +
-  scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
-  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between Gene Affected By Both Batch and Class and PC1", 
-                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
-  scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
-  geom_text(x = 1, y = 1, label ="O", col = "black", size = 2) +
-  geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
-  geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
-  geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
-
-ggplot(data = mean_Cor_sv_df, aes(x = pi_1, y = pi_2, fill = acos(mean_cor_y_pc1) /pi * 180)) + 
-  geom_tile() +
-  scale_fill_gradient2(breaks =c(0:9)*10, limits=c(0, 90), high = "white", mid = "blue") +
-  labs(x = expression(pi[1]), y = expression(pi[2]), fill = 'angle',
-       title = expression(atop("Angle Between Class Vectors and PC1", 
-                               atop(italic("Red X represents the balanced case, Black O represents the none batch effect case"),
-                                    italic("Green letters represent the case batch effect is confounded with class effect"))))) +
-  scale_x_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  scale_y_discrete(breaks = seq(from = 1, to = 41, by = 10),labels = c(0:4)/4) +
-  geom_text(x = 21, y = 21, label = "X", col = "red", size = 2) +
-  geom_text(x = 1, y = 1, label ="O", col = "black", size = 2) +
-  geom_text(x = 41, y = 41, label = "O", col = "black", size = 2) +
-  geom_text(x = 1, y = 41, label = "N", col = "green", size = 2) +
-  geom_text(x = 41, y = 1, label = "P", col = "green", size = 2)
-
-
-
 # save the computation result
 
 save(Cor_sv_df, file = 'rdata/angle_analysis_irwsva.RData')
@@ -342,35 +250,35 @@ save(Cor_sv_df, file = 'rdata/angle_analysis_irwsva.RData')
 
 # output the figures
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_y_bv.pdf')
+pdf(file = 'figures/Geometric_Analysis_of_Modified_SVA/angle_y_bv.pdf')
 print(g1)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_sv_bv_3.pdf')
+pdf(file = 'figures/Geometric_Analysis_of_Modified_SVA/angle_sv_bv.pdf')
 print(g2)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_bv_pc1_3.pdf')
+pdf(file = 'figures/Geometric_Analysis_of_Modified_SVA/angle_bv_pc1.pdf')
 print(g3)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_sv_pc1.pdf')
+pdf(file = 'figures/Geometric_Analysis_of_Modified_SVA/angle_sv_pc1.pdf')
 print(g4)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_x_pc1.pdf')
+pdf(file = 'figures/Geometric_Analysis_of_Modified_SVA/angle_x_pc1.pdf')
 print(g5)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_y_pc1.pdf')
+pdf(file = 'figures/Geometric_Analysis_of_Modified_SVA/angle_y_pc1.pdf')
 print(g6)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/angle_sv_y.pdf')
+pdf(file = 'figures/Geometric_Analysis_of_Modified_SVA/angle_sv_y.pdf')
 print(g7)
 dev.off()
 
-pdf(file = 'figures/mean_heterogeneity/angle/comp_sv_pc1.pdf')
+pdf(file = 'figures/Geometric_Analysis_of_Modified_SVA/comp_sv_pc1.pdf')
 print(g8)
 dev.off()
 

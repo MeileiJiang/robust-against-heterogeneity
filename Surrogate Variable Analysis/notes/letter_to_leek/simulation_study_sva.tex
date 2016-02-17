@@ -85,7 +85,7 @@ The 100 Genes have four types:
 \item Type C: Genes with both class label (measured factor) and batch label (unmeasured factor) signal.
 \item Type D: Genes with no signal.
 \end{itemize}
-The heatmaps of the four types of genes are shown respectively in Figure~\ref{fig:heatmap}. In Figure~\ref{fig:heatmap}, rows are genes, columns are samples and entries are expression values. 
+The heatmaps of the four types of genes are shown respectively in Figure~\ref{fig:heatmap}. In Figure~\ref{fig:heatmap}, rows and columns are genes and samples respectively, and entries are expression values. 
 
 The key step of IRW-SVA is to identify the Type B genes. In the simulation study, two cases are typically investigated:
 \begin{itemize}
@@ -132,38 +132,37 @@ The key step of IRW-SVA is to identify the Type B genes. In the simulation study
 
 \subsection{Case 1: The simulation data set contains only Type C Genes and Type D Genes.}
 
-As shown in Figure~\ref{fig:svas1}\subref{fig:sva1}, the input data matrix in Case 1 is the contamination of the matrices in Figure~\ref{fig:heatmap}\subref{fig:type_c} and Figure~\ref{fig:heatmap}\subref{fig:type_d}. Figure~\ref{fig:svas1}\subref{fig:sva1} shows that the data matrix after removing batch effects through IRW-SVA has the same pattern as the original simulation data set, which indicate that IRW-SVA fails to adjust batch effects in this case. Figure~\ref{fig:svas1}\subref{fig:new_sva1} shows that after removing the batch effects through modified, the rows of Type C genes, which affected by both class and batch effects, have been recovered as the same signal in Figure~\ref{fig:heatmap}\subref{fig:type_a}. This indicates modified SVA adjusts batch effects and recovers the pattern of measured factor quite well in Case 1. 
+Figure~\ref{fig:svas1}\subref{fig:data1} shows the input data matrix in Case 1, which is the contamination of the matrices in Figure~\ref{fig:heatmap}\subref{fig:type_c} and Figure~\ref{fig:heatmap}\subref{fig:type_d}. Figure~\ref{fig:svas1}\subref{fig:sva1} shows that the data matrix after removing batch effects through IRW-SVA has the same pattern as the original simulation data set, which indicate that IRW-SVA fails to adjust batch effects in this case. Figure~\ref{fig:svas1}\subref{fig:new_sva1} shows that after removing the batch effects through modified SVA, the rows of Type C genes in the data set, which affected by both class and batch effects, have been recovered as the class signal in Figure~\ref{fig:heatmap}\subref{fig:type_a}. This from indicates that modified SVA adjusts batch effects and recovers the pattern of measured factor quite well in Case 1. 
 
-In Figure~\ref{fig:visual1}, the x-axis and y-axis represent gene index and probability respectively, and the point of each gene is colored by its type. Figure~\ref{fig:visual1}\subref{fig:pprob1_2} shows the posterior probability of each gene affected by class effects and we expect that Type C genes have high probability while Type D genes have low probabilty. Figure~\ref{fig:visual1}\subref{fig:pprob1_2} indicates that both IRW-SVA and modified SVA identify the genes affected by class effects.
-Figure~\ref{fig:visual1}\subref{fig:pprob1_1} shows the posterior probability of each gene affected by batch effects. The left panel of Figure~\ref{fig:visual1}\subref{fig:pprob1_1} shows that IRW-SVA can not correctly identify the genes associated with batch label, while the right panel of Figure~\ref{fig:visual1}\subref{fig:pprob1_1} indicates modified SVA is able to correctly identify the genes associated with batch label. This is not surprised since IRW-SVA relies on Type B Genes to recover the signal of batch effects while the data set in Case 1 does not contain Type B genes.
+In order to understand the failure of IRW-SVA in Case 1, the posterior probabilities are investigated in the two approaches to SVA. In Figure~\ref{fig:visual1}, the x-axis and y-axis represent gene index and probability respectively, and the genes are colored by their types. Figure~\ref{fig:visual1}\subref{fig:pprob1_1} and Figure~\ref{fig:visual1}\subref{fig:pprob1_2} show the posterior probability of each gene affected by class effects and batch effects respectively. Then in both subfigures we expect that Type C genes have high probabilities while Type D genes have low probabilities. Figure~\ref{fig:visual1}\subref{fig:pprob1_1} indicates that both IRW-SVA and modified SVA correctly identify the genes affected by class effects. The left panel of Figure~\ref{fig:visual1}\subref{fig:pprob1_2} shows that IRW-SVA can not correctly identify the genes associated with batch label, while the right panel of Figure~\ref{fig:visual1}\subref{fig:pprob1_2} indicates modified SVA is able to do that. This is not surprised since IRW-SVA relies on Type B Genes to recover the signal of batch effects but the data set in Case 1 does not contain Type B genes.
 
-Moreover, Figure~\ref{fig:vector1} shows samples from two batches are more separable under the direction of surrogate variable gained from modified SVA. 
+Moreover, Figure~\ref{fig:vector1} visualizes the scores of samples on the surrogate variable constructed by the two approaches to SVA respectively. In Figure~\ref{fig:vector1}, x-axis and y-axis represent samples and expression value respectively, and samples are colored by batch labels. The right panel of Figure~\ref{fig:vector1} shows samples from two batches are more separable under the direction of surrogate variable gained from modified SVA. 
 
-The simulation results in the Case 1 indicate that modified SVA has better performance than IRW-SVA when Type B genes do not exist in the data.
+All these results in the Case 1 indicate that modified SVA has better performance than IRW-SVA when Type B genes do not exist in the data.
 
 \begin{figure}[h!]
     \centering
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.31\textwidth}
         \centering
         \includegraphics[width = \textwidth]{figures/simulate1.pdf}
         \caption{Original simulation data set in the Case 1}
         \label{fig:data1}
     \end{subfigure}% 
 ~
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.31\textwidth}
         \centering
         \includegraphics[width = \textwidth]{figures/sva1.pdf}
         \caption{Remove batch effect through IRW-SVA}
         \label{fig:sva1}
     \end{subfigure}  %
 ~
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.31\textwidth}
         \centering
         \includegraphics[width = \textwidth]{figures/new_sva1.pdf}
         \caption{Remove batch effect through modified SVA}
         \label{fig:new_sva1}
     \end{subfigure}    
-    \caption{Study batch effect through two approaches to SVA in the case 1}
+    \caption{Study batch effect through two approaches to SVA in Case 1}
     \label{fig:svas1}
 \end{figure}
 
@@ -172,17 +171,17 @@ The simulation results in the Case 1 indicate that modified SVA has better perfo
 
 \begin{figure}[h!]
     \centering
-    \begin{subfigure}[t]{0.4\textwidth}
-    \centering
-    \includegraphics[width = \textwidth]{figures/pprop1_1.pdf}
-    \caption{Posterior probability of genes affected by unmeasured factor.}
-    \label{fig:pprob1_1}
-    \end{subfigure}
-~    
-    \begin{subfigure}[t]{0.4\textwidth}
+    \begin{subfigure}[t]{0.45\textwidth}
     \centering
     \includegraphics[width = \textwidth]{figures/pprop1_2.pdf}
-    \caption{Posterior probability of genes affected by measured factor.}
+    \caption{Posterior probability of genes affected by class label (measured factor).}
+    \label{fig:pprob1_1}
+    \end{subfigure}
+    ~
+     \begin{subfigure}[t]{0.45\textwidth}
+    \centering
+    \includegraphics[width = \textwidth]{figures/pprop1_1.pdf}
+    \caption{Posterior probability of genes affected by batch label (unmeasured factor).}
     \label{fig:pprob1_2}
     \end{subfigure}
     \caption{Visualize the posterior probabilities for genes in the Case 1. In each subfigure, the panels on the left show the results from IRW-SVA and the panels on the right show the results form modified SVA.}
@@ -192,7 +191,7 @@ The simulation results in the Case 1 indicate that modified SVA has better perfo
 \begin{figure}
     \centering
     \includegraphics[width = 0.6\textwidth]{figures/vector1.pdf}
-    \caption{Comparison of surrogate variables}
+    \caption{Comparison of surrogate variables. The left panel shows the surrogate variable constructed through IRW-SVA and the right panel shows the surrogate variable constructed through modified SVA.}
     \label{fig:vector1}
 \end{figure}
 
@@ -200,58 +199,67 @@ The simulation results in the Case 1 indicate that modified SVA has better perfo
 
 \subsection{Case 2: The simulation data set contains all four types of genes.}
 
-Figure~\ref{fig:sva2} shows that both IRW-SVA and modified SVA can adjust the batch effects in the Case 2.  Figure~\ref{fig:visual2}\subref{fig:pprob2} shows that both IRW-SVA and modified SVA are able to identify the genes associated with batch label and class label. Figure~\ref{fig:visual2}\subref{fig:vector2} shows that they produce similar surrogate variable which separate samples from two batches pretty well.
+In contrast to Case 1, the input data matrix in Case 2 contains all four types of genes, as shown in Figure~\ref{fig:svas2}\subref{fig:data2}, which is a typical situation we expect IRW-SVA works. Figure~\ref{fig:svas2}\subref{fig:sva2} and Figure~\ref{fig:svas2}\subref{fig:new_sva2} shows that the genes affected by class labels in both adjusted data matrices have the similar pattern in Figure~\ref{fig:heatmap}\subref{fig:type_a}. There results demonstrate that both IRW-SVA and modified SVA can adjust the batch effects in the Case 2.  
 
-The simulation results in the Case 2 indicate that IRW-SVA and modified SVA have similar performance when the data set contains Type B genes.
+Moreover, Figure~\ref{fig:visual2} shows the posterior probabilities in the two approaches. In Case 2, we expect that Type A and Type C genes have high posterior probabilities affected by class effects, and Type B and Type C genes  have high posterior probabilities affected by batch effects. Then Figure~\ref{fig:visual2}\subref{fig:pprob2_1} and Figure~\ref{fig:visual2}\subref{fig:pprob2_2} shows that both IRW-SVA and modified SVA are able to identify the genes associated with batch label and class label as well. 
+
+Figure~\ref{fig:vector2} also shows that they produce similar surrogate variables which separate samples from two batches pretty well.
+
+To sum up, the simulation results in the Case 2 indicate that IRW-SVA and modified SVA have similar performance and are able to adjust the unmeasured factors when the data set contains Type B genes.
 
 \begin{figure}[h!]
     \centering
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.31\textwidth}
         \centering
         \includegraphics[width = \textwidth]{figures/simulate2.pdf}
         \caption{Original simulation data set in the Case 2}
+        \label{fig:data2}
     \end{subfigure}% 
 ~
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.31\textwidth}
         \centering
         \includegraphics[width = \textwidth]{figures/sva2.pdf}
         \caption{Remove batch effect through IRW-SVA}
+        \label{fig:sva2}
     \end{subfigure}  %
 ~
-    \begin{subfigure}[b]{0.3\textwidth}
+    \begin{subfigure}[b]{0.31\textwidth}
         \centering
         \includegraphics[width = \textwidth]{figures/new_sva2.pdf}
         \caption{Remove batch effect through modified SVA}
+        \label{fig:new_sva2}
     \end{subfigure}    
-    \caption{Study batch effect through two approaches to SVA in the Case 2}
-    \label{fig:sva2}
+    \caption{Study batch effect through two approaches to SVA in Case 2}
+    \label{fig:svas2}
 \end{figure}
+
+
+
 
 \begin{figure}[h!]
     \centering
-    \begin{subfigure}[t]{0.4\textwidth}
+    \begin{subfigure}[t]{0.45\textwidth}
     \centering
-    \includegraphics[width = \textwidth]{figures/pprop2_1.pdf}
-    \caption{Posterior probability of genes affected by measured factor.}
-    \label{fig:pprob1_1}
+    \includegraphics[width = \textwidth]{figures/pprop2_2.pdf}
+    \caption{Posterior probability of genes affected by class label (measured factor).}
+    \label{fig:pprob2_1}
     \end{subfigure}
-~    
-    \begin{subfigure}[t]{0.4\textwidth}
+    ~
+     \begin{subfigure}[t]{0.45\textwidth}
     \centering
     \includegraphics[width = \textwidth]{figures/pprop2_1.pdf}
-    \caption{Posterior probability of genes affected by unmeasured factor.}
-    \label{fig:pprob1_2}
+    \caption{Posterior probability of genes affected by batch label (unmeasured factor).}
+    \label{fig:pprob2_2}
     \end{subfigure}
     \caption{Visualize the posterior probabilities for genes in the Case 2. In each subfigure, the panels on the left show the results from IRW-SVA and the panels on the right show the results form modified SVA.}
-    \label{fig:visual1}
+    \label{fig:visual2}
 \end{figure}
 
-\begin{figure}[h!]
+\begin{figure}
     \centering
     \includegraphics[width = 0.6\textwidth]{figures/vector2.pdf}
-    \caption{Comparison of surrogate variables}
+    \caption{Comparison of surrogate variables. The left panel shows the surrogate variable constructed through IRW-SVA and the right panel shows the surrogate variable constructed through modified SVA.}
     \label{fig:vector2}
-    \caption{Visualize the scores of samples on the surrogate variable. The panels on the left show the results from IRW-SVA and the panels on the right show the results form modified SVA.}
 \end{figure}
 
 \newpage

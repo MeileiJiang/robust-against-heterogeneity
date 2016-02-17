@@ -31,10 +31,11 @@ colnames(Edata) <- paste0("sample", c(1: dim(Edata)[2]))
 Mdata = melt(Edata)
 
 gg1 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value", title = 'Heatmap of Type A Genes') +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
   geom_tile() + 
   scale_fill_gradient2(limits = c(-8, 8)) +
-  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(),
+        axis.title=element_text(size=16,face="bold"))
 
 pdf(file = 'figures/Modified_SVA/Type_A_Gene.pdf', height = 5)
 print(gg1)
@@ -55,10 +56,12 @@ colnames(Edata) <- paste0("sample", c(1: dim(Edata)[2]))
 Mdata = melt(Edata)
 
 gg2 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value", title = 'Heatmap of Type B Genes') +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
   geom_tile() + 
   scale_fill_gradient2(limits = c(-8, 8)) +
-  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(),
+        axis.title=element_text(size=16,face="bold"))
+
 
 pdf(file = 'figures/Modified_SVA/Type_B_Gene.pdf', height = 5)
 print(gg2)
@@ -79,10 +82,12 @@ colnames(Edata) <- paste0("sample", c(1: dim(Edata)[2]))
 Mdata = melt(Edata)
 
 gg3 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value", title = 'Heatmap of Type C Genes') +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
   geom_tile() + 
   scale_fill_gradient2(limits = c(-8, 8)) +
-  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(),
+        axis.title=element_text(size=16,face="bold"))
+
 
 pdf(file = 'figures/Modified_SVA/Type_C_Gene.pdf', height = 5)
 print(gg3)
@@ -103,10 +108,12 @@ colnames(Edata) <- paste0("sample", c(1: dim(Edata)[2]))
 Mdata = melt(Edata)
 
 gg4 = ggplot(Mdata, aes(x = Var2, y = Var1, fill = value)) +
-  labs(x = "Sample", y = "Gene", fill = "Value", title = 'Heatmap of Type D Genes') +
+  labs(x = "Sample", y = "Gene", fill = "Value") +
   geom_tile() + 
   scale_fill_gradient2(limits = c(-8, 8)) +
-  theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+  theme(axis.ticks = element_blank(), axis.text.x = element_blank(),
+        axis.title=element_text(size=16,face="bold"))
+
 
 pdf(file = 'figures/Modified_SVA/Type_D_Gene.pdf', height = 5)
 print(gg4)
