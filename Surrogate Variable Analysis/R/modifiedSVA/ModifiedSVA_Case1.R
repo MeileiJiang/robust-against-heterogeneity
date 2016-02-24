@@ -9,7 +9,7 @@ library(dplyr)
 library(reshape2)
 library(sva)
 
-source('R/mean_heterogeneity/fixed_effects_mean_hetero_sva/Generate_mean_hetero_data.R')
+source('R/modifiedSVA/Generate_mean_hetero_data_new.R')
 source('R/modifiedSVA/newirwsva.R')
 source('R/modifiedSVA/helper.R')
 
@@ -19,10 +19,14 @@ source('R/modifiedSVA/helper.R')
 n = 80; # Total number of samples
 c1 = 40; # Total number of samples in the Class 1
 c2 = 40; # Total number of samples in the Class 2
-t = c(0, 50, 0, 50) # Settings of features
+t = c(0, 0, 50, 50) # Settings of features
 
 tempdata <- Generate_mean_hetero_data(pi_1 = 0.5, pi_2 = 0.5, t = t)
 M <- tempdata %>% select(-y, -batch, -pi_1, -pi_2, -c1, -c2)
+
+# save simulation data in Case 1 ------------------------------------------
+
+save(tempdata, file = "rdata/simulate_data_case_1.RData")
 # Expression data
 Edata <- t(M)
 colnames(Edata) <- paste0("sample", c(1: dim(Edata)[2]))
@@ -86,9 +90,9 @@ plot(svobj2$pprob.gam)
 plot(svobj2$pprob.b)
 
 genes.pprob.gam = data.frame(irw_sva.pprob.gam = svobj$pprob.gam, new_sva.pprob.gam = svobj2$pprob.gam, 
-                             type = rep(c('Type A: b','Type C: b & gam', 'Type B: gam', 'Type D'), t), index = c(1:100))
+                             type = rep(c('Type A: b', 'Type B: gam', 'Type C: b & gam', 'Type D: noise'), t), index = c(1:100))
 genes.pprob.b = data.frame(irw_sva.pprob.b = svobj$pprob.b, new_sva.pprob.b = svobj2$pprob.b, 
-                           type = rep(c('Type A: b','Type C: b & gam', 'Type B: gam', 'Type D'), t), index = c(1:100))
+                           type = rep(c('Type A: b', 'Type B: gam', 'Type C: b & gam', 'Type D: noise'), t), index = c(1:100))
 mgenes.pprob.gam = melt(genes.pprob.gam, id.vars = c('type','index'))
 mgenes.pprob.gam$variable = factor(mgenes.pprob.gam$variable, levels = c('irw_sva.pprob.gam', 'new_sva.pprob.gam')) 
 mgenes.pprob.b = melt(genes.pprob.b, id.vars = c('type','index'))
@@ -143,6 +147,7 @@ gg2 = ggplot(data = mvectors, aes(x = sample, y = value, col = as.factor(batch))
   geom_point() +
   labs(x= 'Sample', y='Value', col = 'Batch:',
        title = 'Comparison of Surrogate Variables') +
+  scale_colour_manual(values = c('orange','blue')) +
   theme(plot.title = element_text(size = 20, face = "bold"), axis.ticks = element_blank(), 
         axis.title=element_text(size=16, face="bold"), axis.text.x = element_blank(), 
         strip.text.x = element_text(size = 16),

@@ -1,0 +1,266 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Beamer Presentation
+% LaTeX Template
+% Version 1.0 (10/11/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND THEMES
+%----------------------------------------------------------------------------------------
+
+\documentclass{beamer}
+
+\mode<presentation> {
+
+% The Beamer class comes with a number of default slide themes
+% which change the colors and layouts of slides. Below this is a list
+% of all the themes, uncomment each in turn to see what they look like.
+
+%\usetheme{default}
+%\usetheme{AnnArbor}
+%\usetheme{Antibes}
+%\usetheme{Bergen}
+%\usetheme{Berkeley}
+%\usetheme{Berlin}
+%\usetheme{Boadilla}
+%\usetheme{CambridgeUS}
+%\usetheme{Copenhagen}
+%\usetheme{Darmstadt}
+%\usetheme{Dresden}
+%\usetheme{Frankfurt}
+%\usetheme{Goettingen}
+%\usetheme{Hannover}
+%\usetheme{Ilmenau}
+%\usetheme{JuanLesPins}
+%\usetheme{Luebeck}
+\usetheme{Madrid}
+%\usetheme{Malmoe}
+%\usetheme{Marburg}
+%\usetheme{Montpellier}
+%\usetheme{PaloAlto}
+%\usetheme{Pittsburgh}
+%\usetheme{Rochester}
+%\usetheme{Singapore}
+%\usetheme{Szeged}
+%\usetheme{Warsaw}
+
+% As well as themes, the Beamer class has a number of color themes
+% for any slide theme. Uncomment each of these in turn to see how it
+% changes the colors of your current slide theme.
+
+%\usecolortheme{albatross}
+%\usecolortheme{beaver}
+%\usecolortheme{beetle}
+%\usecolortheme{crane}
+%\usecolortheme{dolphin}
+%\usecolortheme{dove}
+%\usecolortheme{fly}
+%\usecolortheme{lily}
+%\usecolortheme{orchid}
+%\usecolortheme{rose}
+%\usecolortheme{seagull}
+%\usecolortheme{seahorse}
+%\usecolortheme{whale}
+%\usecolortheme{wolverine}
+
+%\setbeamertemplate{footline} % To remove the footer line in all slides uncomment this line
+%\setbeamertemplate{footline}[page number] % To replace the footer line in all slides with a simple slide count uncomment this line
+
+%\setbeamertemplate{navigation symbols}{} % To remove the navigation symbols from the bottom of all slides uncomment this line
+}
+
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title[Hetererogeneity Adjustment]{Reading: Heterogeneity Adjustment with Application to Graphical Model Inference} % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author{Meilei Jiang} % Your name
+\institute[UNC] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+Department of Statistics and Operations Research \\ % Your institution for the title page
+\medskip
+University of North Carolina at Chapel Hill % Your email address
+}
+\date{\today} % Date, can be changed to a custom date
+
+\begin{document}
+
+\begin{frame}
+\titlepage % Print the title page as the first slide
+\end{frame}
+
+\begin{frame}
+\frametitle{Overview} % Table of contents slide, comment this block out to remove it
+\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+%------------------------------------------------
+\section{Introduction} % Sections can be created in order to organize your presentation into discrete blocks, all sections and subsections are automatically printed in the table of contents as an overview of the talk
+%------------------------------------------------
+
+
+\begin{frame}
+\frametitle{Heterogeneity Effects}
+Heterogeneity is an unwanted variation when analyzing aggregated datasets from multiple sources.\\~\\
+
+Challenge of modeling and estimating heterogeneity effect:
+\begin{itemize}
+	\item[1] We can only access a limited number of samples from an individual group, given the high cost of biological experiment, technological constraint or fast economy regime switching.
+	\item[2] The dimensionality can be much larger than the total aggregated number of samples.
+\end{itemize}	
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Model Settings of Data Heterogeneity}
+
+\begin{itemize}
+\item Assume data come from $m$ different sources
+    \begin{itemize}
+    	\item the $i$th data source contributes $n_i$ samples.
+    	\item Each sample having $p$ measurements.
+    \end{itemize}
+\item Assume the batch-specific latent factors $f_t^i$ influence the observed data $X_{jt}^i$ in batch $i$ ($j$ indexes variables; $t$ indexes samples).
+    \begin{itemize}
+    	\item $X_{jt}^i = {\lambda_j^i}'f_t^i + u_{jt}^i, 1 \leq j \leq p, 1 \leq t \leq n_i, 1 \leq i \leq m$
+    	\item where $\lambda_j^i$ is unknown factor loading for variable $j$ and $u_{jt}^i$ is true uncorrupted signals. 
+    \end{itemize}
+\item Assume that $f_t^i$ is independent of $u_{jt}^i$.
+\item Assume $f_t^i \sim N(\mathbf{0}, \mathbf{I})$ and $\mathbf{u}_t^i = (u_{1t}, \cdots, u_{pt})'$ shares the common normal distribution $N(\mathbf{0}, \boldsymbol{\Sigma}_{p \times p})$.
+\end{itemize}
+
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Model Settings of Data Heterogeneity}
+
+The matrix form model can be written as: $\mathbf{X}^i = \boldsymbol{\Lambda}^i {\mathbf{F}^i}' + \mathbf{U}^i$.
+\begin{itemize}
+	\item $\mathbf{X}^i$ is a $p \times n_i$ data matrix in the $i$th batch, $\boldsymbol{\Lambda}^i$ is a $p \times K^i$ factor loading matrix with $\lambda_j^i$ in the $j$th row, $\mathbf{F}^i$ is an $n_i \times K^i$ factor matrix and $\mathbf{U}^i$ is a $p \times n_i$ signal matrix.
+	\item $X_t^i \sim N(\mathbf{0}, \boldsymbol{\Lambda}^i {\boldsymbol{\Lambda}^i}' + \boldsymbol{\Sigma})$.
+	\item The heterogeneity effect is modeled as a low rank component $\boldsymbol{\Lambda}^i {\boldsymbol{\Lambda}^i}'$ of the population covariance matrix of $\mathbf{X}_t^i$.
+\end{itemize}
+\end{frame}
+
+%------------------------------------------------
+\section{Problem Setup}
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Semiparametric Factor Model}
+
+\begin{itemize}
+	\item For subgroup $i$, we have $d$ external covariates $\mathbf{W}_j^i = (W_{j1}^i, \cdots, W_{jd}^i)'$ for variable $j$.
+	\item Assume that these covariates have some explanatory power on the loading parameters $\lambda_j^i$: $\lambda_j^i = g^i(\mathbf{W}_j^i) + \gamma_j^i$.
+	\item $X_{jt}^i = {\lambda_j^i}'f_t^i + u_{jt}^i = (g^i(\mathbf{W}_j^i) + \gamma_j^i)' t^i + u_{jt}^i$.
+	\begin{itemize}
+		\item If $\mathbf{W}_j^i$ is not informative, then $g^i(.) = 0$.
+	\end{itemize}
+	\item $\mathbf{X}^i = \boldsymbol{\Lambda}^i {\mathbf{F}^i}' + \mathbf{U}^i$, where $\boldsymbol{\Lambda}^i = \mathbf{G}^i(\mathbf{W}^i) + \boldsymbol{\Gamma}^i, 1 \leq i \leq m$.    
+	\begin{itemize}
+		\item $\mathbf{G}^i(\mathbf{W}^i)$ and $\boldsymbol{\Gamma}^i$ are $p \times K^i$ component matrices of $\boldsymbol{\Lambda}^i$.
+	\end{itemize}
+\end{itemize}	
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+	\frametitle{Modeling Assumptions And General Methodology}
+	Data Generating Process:
+	\begin{itemize}
+		\item[i] $n_i {\mathbf{F}^i}'\mathbf{F}^i = \mathbf{I}$.
+		\item[ii] $\{\mathbf{u}_t^i\}$ are independent within and between subgroups. $\{f_t^i\}_{t \leq n_i}$ is a stationary process, but with arbitrary temporal dependency.
+		\item[iii] $\exists C_0 > 0$, such that $\|\boldsymbol{\Sigma}\|_2 < C_0$.
+		\item[iv] The tail of the factors is sub-Gaussian.
+	\end{itemize}
+	
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+	\frametitle{Modeling Assumptions And General Methodology}
+	Regime 1: External covariates are not informative
+	\begin{itemize}
+		\item (Pervasiveness) $\exists c_{\text{min}}, c_{\text{max}} > 0$, so that $c_{\text{min}} < \lambda_{\text{min}}(p^{-1}\boldsymbol{\Lambda}^i {\boldsymbol{\Lambda}^i}') < \lambda_{\text{max}}(p^{-1}\boldsymbol{\Lambda}^i {\boldsymbol{\Lambda}^i}') < c_{\text{max}}$.
+		\item $\max_{k \leq K^i, j \leq p} |\lambda_{jk}^i| = O_P(\sqrt{\log p})$.
+	\end{itemize}
+	\\~\\
+	Regime 2: External covariates are informative
+	\begin{itemize}
+		\item (Pervasiveness) $\exists c_{\text{min}}, c_{\text{max}} > 0$, so that $c_{\text{min}} < \lambda_{\text{min}}(p^{-1}\mathbf{G}^i(\mathbf{W}^i) {\mathbf{G}^i(\mathbf{W}^i)}') < \lambda_{\text{max}}(p^{-1}\mathbf{G}^i(\mathbf{W}^i) {\mathbf{G}^i(\mathbf{W}^i)}') < c_{\text{max}}$.
+		\item $\max_{k \leq K^i, j \leq p}E_{g_k}{(W_j^i)}^2 \leq \infty$.
+		\item $\max_{k \leq K^i, j \leq p} |\gamma_{jk}^i| = O_P(\sqrt{\log p})$.
+	\end{itemize}
+	
+\end{frame}
+
+%------------------------------------------------
+\section{Framework of heterogeneity adjustment: Adaptive Low-rank Principal Heterogeneity Adjustment (ALPHA)}
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{The ALPHA Framework}
+This section covers details for heterogeneity adjustments under both regimes that $G_i(·) = 0$ and $G_i(·) \neq 0$: they correspond to estimating $U_i$ by either PCA or Projected-PCA. 
+
+From now on, we drop the superscript i whenever there is no confusion as we focus on the ith data source. We will use the notation $\hat{(\mathbf{F})}$ if $ \mathbf{F} $ is estimated by PCA and $ \tilde{\mathbf{F}}$ if estimated by PPCA. This convention applies to other related quantities such as $\hat{(\mathbf{U})}$ and $ \tilde{\mathbf{U}}$, the heterogeneity adjusted estimator. In addition, we use notations such as $ \check{\mathbf{F}} $ and $\check{\mathbf{U}}$ to denote the final estimators.
+
+By the priciple of least squre, the residul estimator of $\mathbf{U}$ admits the form $\check{\mathbf{U}} = \mathbf{X} (\mathbf{I} - \frac{1}{n}\check{\mathbf{F}}\check{\mathbf{F}}')$.
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Estimating factors by PCA}
+
+\end{frame}
+
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Estimating factors by Projected-PCA}
+
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{References}
+\footnotesize{
+\begin{thebibliography}{99} % Beamer does not support BibTeX so references must be inserted manually as below
+\bibitem[Fan J., 2012]{p1} Jianqing Fan, Han Liu, Weichen Wang and Ziwei Zhu (2012)
+\newblock Heterogeneity Adjustment with Applications to Graphical Model Inference
+\newblock \emph{Journal of the American Statistical Association} Under review.
+\end{thebibliography}
+}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\Huge{\centerline{The End}}
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+
+\end{document} 
