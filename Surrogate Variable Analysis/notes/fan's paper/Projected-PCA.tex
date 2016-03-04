@@ -1,0 +1,390 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Beamer Presentation
+% LaTeX Template
+% Version 1.0 (10/11/12)
+%
+% This template has been downloaded from:
+% http://www.LaTeXTemplates.com
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND THEMES
+%----------------------------------------------------------------------------------------
+
+\documentclass{beamer}
+
+\mode<presentation> {
+
+% The Beamer class comes with a number of default slide themes
+% which change the colors and layouts of slides. Below this is a list
+% of all the themes, uncomment each in turn to see what they look like.
+
+%\usetheme{default}
+%\usetheme{AnnArbor}
+%\usetheme{Antibes}
+%\usetheme{Bergen}
+%\usetheme{Berkeley}
+%\usetheme{Berlin}
+%\usetheme{Boadilla}
+%\usetheme{CambridgeUS}
+%\usetheme{Copenhagen}
+%\usetheme{Darmstadt}
+%\usetheme{Dresden}
+%\usetheme{Frankfurt}
+%\usetheme{Goettingen}
+%\usetheme{Hannover}
+%\usetheme{Ilmenau}
+%\usetheme{JuanLesPins}
+%\usetheme{Luebeck}
+\usetheme{Madrid}
+%\usetheme{Malmoe}
+%\usetheme{Marburg}
+%\usetheme{Montpellier}
+%\usetheme{PaloAlto}
+%\usetheme{Pittsburgh}
+%\usetheme{Rochester}
+%\usetheme{Singapore}
+%\usetheme{Szeged}
+%\usetheme{Warsaw}
+
+% As well as themes, the Beamer class has a number of color themes
+% for any slide theme. Uncomment each of these in turn to see how it
+% changes the colors of your current slide theme.
+
+%\usecolortheme{albatross}
+%\usecolortheme{beaver}
+%\usecolortheme{beetle}
+%\usecolortheme{crane}
+%\usecolortheme{dolphin}
+%\usecolortheme{dove}
+%\usecolortheme{fly}
+%\usecolortheme{lily}
+%\usecolortheme{orchid}
+%\usecolortheme{rose}
+%\usecolortheme{seagull}
+%\usecolortheme{seahorse}
+%\usecolortheme{whale}
+%\usecolortheme{wolverine}
+
+%\setbeamertemplate{footline} % To remove the footer line in all slides uncomment this line
+%\setbeamertemplate{footline}[page number] % To replace the footer line in all slides with a simple slide count uncomment this line
+
+%\setbeamertemplate{navigation symbols}{} % To remove the navigation symbols from the bottom of all slides uncomment this line
+}
+
+\usepackage{graphicx} % Allows including images
+\usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
+
+
+%new command
+%% Blackboard bold letters
+\newcommand{\E}{\mathbb E}
+\newcommand{\N}{\mathbb N}
+\newcommand{\R}{\mathbb R}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\Z}{\mathbb Z}
+\newcommand{\C}{\mathbb C}
+
+%% Bold font letters
+\newcommand{\bA}{\mathbf A}
+\newcommand{\bB}{\mathbf B}
+\newcommand{\bE}{\mathbf E}
+\newcommand{\bF}{\mathbf F}
+\newcommand{\bG}{\mathbf G}
+\newcommand{\bI}{\mathbf I}
+\newcommand{\bM}{\mathbf M}
+\newcommand{\bP}{\mathbf P}
+\newcommand{\bR}{\mathbf R}
+\newcommand{\bU}{\mathbf U}
+\newcommand{\bX}{\mathbf X}
+\newcommand{\bY}{\mathbf Y}
+
+\newcommand{\bb}{\mathbf b}
+%% bold Greek symbols
+\newcommand{\balpha}{\boldsymbol{\alpha}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bmu}{\boldsymbol{\mu}}
+\newcommand{\bdeta}{\boldsymbol{\eta}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bseta}{\boldsymbol{\eta}}
+\newcommand{\brho}{\boldsymbol{\rho}}
+\newcommand{\bepsilon}{\boldsymbol{\epsilon}}
+\newcommand{\bvarepsilon}{\boldsymbol{\varepsilon}}
+\newcommand{\bgamma}{\boldsymbol{\gamma}}
+
+\newcommand{\bOmega}{\boldsymbol{\Omega}}
+\newcommand{\bSigma}{\boldsymbol{\Sigma}}
+\newcommand{\bTheta}{\boldsymbol{\Theta}}
+\newcommand{\bLambda}{\boldsymbol{\Lambda}}
+\newcommand{\bGamma}{\boldsymbol{\Gamma}}
+\newcommand{\bPhi}{\boldsymbol{\Phi}}
+\newcommand{\bDelta}{\boldsymbol{\Delta}}
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+
+\title[Projected PCA]{Reading: Projected Principle Component Analysis In Factor Models} % The short title appears at the bottom of every slide, the full title is only on the title page
+
+\author{Meilei Jiang} % Your name
+\institute[UNC] % Your institution as it will appear on the bottom of every slide, may be shorthand to save space
+{
+Department of Statistics and Operations Research \\ % Your institution for the title page
+\medskip
+University of North Carolina at Chapel Hill % Your email address
+}
+\date{\today} % Date, can be changed to a custom date
+
+\begin{document}
+
+\begin{frame}
+\titlepage % Print the title page as the first slide
+\end{frame}
+
+\begin{frame}
+\frametitle{Overview} % Table of contents slide, comment this block out to remove it
+\tableofcontents % Throughout your presentation, if you choose to use \section{} and \subsection{} commands, these will automatically be printed on this slide as an overview of your presentation
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+%	PRESENTATION SLIDES
+%----------------------------------------------------------------------------------------
+
+%------------------------------------------------
+\section{Semi-parametric Factor Model} % Sections can be created in order to organize your presentation into discrete blocks, all sections and subsections are automatically printed in the table of contents as an overview of the talk
+%------------------------------------------------
+
+
+\begin{frame}
+\frametitle{Factor Model}
+Classical factor model:
+\begin{equation}
+	\label{eq:factormodel1}
+	y_{it} = \sum_{\substack{k=1}}^{K} \lambda_{ik} f_{tk} + u_{it}, i = 1, \cdots, p, t = 1, \cdots, T.
+\end{equation}
+\begin{itemize}
+	\item Observed data $\{y_{it}\}_{i \leq p, t \leq T}$, where $i$ indexes variable, $t$ indexes sample.
+	\item Unobservable common factors: $\{f_{tk}\}_{k \leq K}$, where $k$ indexes factor.
+	\item Corresponding factor loadings for variable $i$: $\{\lambda_{ik}\}_{k \leq K}$.
+	\item Idiosyncratic component that cannot be explained by the static common factors: $u_{it}$.
+\end{itemize}	
+
+\end{frame}
+%------------------------------------------------
+
+
+\begin{frame}
+\frametitle{Factor Model}
+	
+Matrix form of factor model~(\ref{eq:factormodel1}):
+\begin{equation}
+\label{eq:factormodel2}
+\bY = \bLambda \bF' + \bU.
+\end{equation}
+\begin{itemize}
+	\item $\bY \in \R^{p \times T}, \bLambda \in \R^{p \times K}, \bF \in \R^{T \times K}, \bU \in \R^{p \times T}$.
+	\item \emph{Goal}: accurately estimating the loading matrices $\bLambda$ and unobserved factors $\bF$.
+	\item High dimension low sample size settings: $p \to \infty$ and $T$ may or may not grow.
+\end{itemize}    
+\end{frame}
+
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Semi-parametric Factor Model}
+
+Semi-parametric factor model:
+\begin{equation}
+	\label{eq:semiparafactormodel1}
+	\begin{aligned}
+	\lambda_{ik} &= g_k(\bX_i) + \gamma_{ik}, i = 1, \cdots, p, k = 1, \cdots, K.\\ 
+	y_{it} &= \sum_{\substack{k=1}}^{K} \{ g_k(\bX_i) + \gamma_{ik}\} f_{tk} + u_{it}, i = 1, \cdots, p, t = 1, \cdots, T.\\
+	\end{aligned}
+\end{equation}
+\begin{itemize}
+	\item Covariates associated with the $i$th variables: $\bX_i = (X_{i1}, \cdots, X_{id})'$.
+	\begin{itemize}
+		\item $\bX_i$ can be individual characteristics(e.g. age, weight, clinical and genetic information.)
+	\end{itemize}
+	\item Unknown nonparametric function: $g_k(.)$.
+	\item The component of loading coefficient that cannot be explained by the covariates $\bX_i$: $\gamma_{ik}$.
+	\begin{itemize}
+		\item $\gamma_{ik}$ have mean zero.
+		\item $\gamma_{ik}$ is independent with $u_{it}$ and $\bX_{i}$
+	\end{itemize}
+\end{itemize}
+    
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Semi-parametric Factor Models}
+Unknown nonparametric function $g_k(.)$: $g_k(\bX_i) = \sum_{\substack{l = 1}}^{d} g_{kl}(X_{il})$
+\begin{itemize}
+	\item Not depend on $t$: the loadings represent the cross-sectional heterogeneity only.
+	\item $g_{kl}(X_{il}) = \sum_{\substack{j = 1}}^{J}b_{j,kl}\phi_j(X_{il}) + R_{kl}(X_{il}), k \leq K, i \leq p, l \leq d.$
+	\item Basis functions: $\{\phi_1(x), \cdots, \phi_J(x) \}$.
+	\item The sieve coefficients for $g_{kl}$: $\{b_{j,kl}\}_{j \leq J}$.
+	\item Remaining function: $R_{kl}(X_{il})$
+	\begin{itemize}
+		\item $\sup_x |R_{kl}(x)| \to 0$ as $J \to \infty.$
+	\end{itemize}	
+\end{itemize}	
+\end{frame}
+
+
+%------------------------------------------------
+
+
+\begin{frame}
+\frametitle{Semi-parametric Factor Models}
+Matrix form of semi-parametric factor model:
+\begin{equation}
+	\label{eq:semiparafactormodel2}
+	\begin{aligned}
+	\bLambda &= \bG(\bX) + \bGamma, \E(\bGamma | \bX) = 0, \E(\bG(\bX) \bGamma') = 0\\
+	\bY &= \{\bG(\bX) + \bGamma \} \bF' + \bU,\\
+	\bG(\bX) &= \bPhi(\bX) \bB + \bR(\bX). \\
+	\end{aligned}
+\end{equation}
+\begin{itemize}
+	\item Matrix of sieve coefficients: $\bB = (\bb_1, \cdots, \bb_K) \in \R^{(Jd)\times K}$.
+	\begin{itemize}
+		\item $\bb_k^{'} = (b_{1,k1}, \cdots, b_{J,k1}, \cdots, b_{1,kd}, \cdots, b_{J, kd}) \in \R^{Jd}$.
+	\end{itemize}
+	\item Matrix of basis function:$\bPhi = (\phi(\bX_1), \cdots, \phi(\bX_p))' \in \R^{p\times (Jd)}$.
+	\begin{itemize}
+		\item $\phi(\bX_i) = (\phi_1(\bX_{i1}), \cdots, \phi_J(\bX_{i1}), \cdots, \phi_1(\bX_{id}), \cdots, \phi_J(\bX_{id}) \in \R^{Jd}$.
+	\end{itemize}
+	\item $\bR(\bX) = \{\sum_{\substack{l=1}}^{d}R_{kl}(X_{il})\} \in \R^{p \times K}$
+\end{itemize}
+
+\end{frame}
+	
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Semi-parametric Factor Models}
+The model~(\ref{eq:semiparafactormodel2}) can be rewritten as
+\begin{equation}
+\bY = \{\bPhi(\bX) \bB + \bGamma \}\bF' + \bR(\bX)\bF' + \bU
+\end{equation}	
+\begin{itemize}
+	\item The sieve approximation error: $\bR(\bX)\bF'$.
+	\item The idiosyncratic: $\bU$.
+\end{itemize}
+	
+\end{frame}
+
+%------------------------------------------------
+\section{Projected Principal Component Analysis}
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Intuition}
+Classical Principal Component Analysis: running PCA on the original $\bY$ to estimate $\bF$ and $\bLambda$.\\~\\
+
+Projected Principal Component Analysis: running PCA on the projected data $\hat{\bY} = \bP \bY$ to estimate $\bF$ and $\bP \bLambda$.
+\begin{itemize}	
+\item $\mathcal{X}$ is a space spanned by $\bX = \{\bX_i\}_{i \leq p}$, which is orthogonal to $\bU$.
+\item $\bP$ is the projection matrix onto $\mathcal{X}$ and $\bP \bU \approx \mathbf{0}$.
+\item  Analyzing the projected data $\hat{\bY} = \bP \bY$ is an approximately noiseless problem
+\end{itemize}
+	
+\end{frame}
+
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Key Assumptions}
+
+Identification assumptions:
+\begin{itemize}
+	\item $\frac{1}{T} \bF'\bF = \bI_K$
+	\item $\bLambda' \bP \bLambda$ is a diagonal matrix with distinct entries.
+\end{itemize}
+The two assumptions mean that the columns of factors and loadings can be orthogonalized.
+
+
+
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Key Assumptions}
+Genuine projection assumptions: There are positive constants $c_{\text{min}}$ and $c_{\text{max}}$ such that, with probability approaching one (as $p \to \infty$),
+$$c_{\text{min}} < \lambda_{\text{min}}(p^{-1}\bLambda' \bP \bLambda) < \lambda_{\text{max}}(p^{-1}\bLambda' \bP \bLambda) < c_{\text{max}}.$$ 
+\begin{itemize}
+	\item Require the covariates $\bX$ have nonvanishing explaining power on the loading matrix, so that the projection matrix $\bLambda' \bP \bLambda$  has spiked eigenvalues.
+	\item Rule out the case when $\bX$ is completely unassociated with the loading matrix $\bLambda$.
+\end{itemize}	
+\end{frame}
+	
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Projected Principal Component Analysis}
+
+Estimation of $\bF$
+\begin{itemize}
+	\item $\frac{1}{T}\hat{\bY}' \hat{\bY} = \frac{1}{T} \bY' \bP \bY \approx \frac{1}{T} \bF \bLambda' \bP \bLambda \bF'$.
+	\item $\frac{1}{T} \bY' \bP \bY \bF\approx \frac{1}{T} \bF \bLambda' \bP \bLambda $
+	\item The columns of $\bF/\sqrt{T}$ are approximately the first $K$ PCs of $\frac{1}{T} \bY' \bP \bY$.
+\end{itemize}
+
+Two estimations of $\bP\bLambda$	
+\begin{itemize}
+	\item[1.] $\frac{1}{T} \bP \bY \bF = \bP\bLambda + \frac{1}{T} \bP \bU \bF \approx \bP\bLambda$ 
+	\item[2.] The columns of $\bP\bLambda$ are approximately the first $K$ PCs of $\frac{1}{T}\hat{\bY} \hat{\bY}'$.
+	\begin{itemize}
+		\item $\frac{1}{T}\hat{\bY} \hat{\bY}' = \frac{1}{T} \bP \bY  \bY' \bP = \bP \bLambda  \bLambda' \bP + \tilde{\bDelta}\approx \bP \bLambda  \bLambda' \bP$.
+		\item $(\frac{1}{T} \bP \bY  \bY' \bP)\bP\bLambda = \bP\bLambda(\bLambda' \bP \bLambda)$
+	\end{itemize}
+\end{itemize}
+\end{frame}
+
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{Projected Principal Component Analysis For Semi-parametric Factor Model}
+\begin{itemize}
+	\item $\bP = \bPhi(\bX)(\bPhi(\bX)'\bPhi(\bX))\bPhi(\bX)' $.
+	\item $\hat{\bF}/\sqrt{T}$ are the first $K$ PCs of $\frac{1}{T} \bY' \bP \bY$.
+	\item $\hat{\bG}(\bX) = \frac{1}{T} \bP \bY \hat{\bF}$.
+	\item $\hat{\bLambda} = \bY\hat{\bF}/T$.
+	\item $\hat{\bGamma} = \hat{\bLambda} - \hat{\bG}(\bX) = \frac{1}{T} (\bI - \bP) \bY \hat{\bF}$.
+\end{itemize}
+	
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\frametitle{References}
+\footnotesize{
+\begin{thebibliography}{99} % Beamer does not support BibTeX so references must be inserted manually as below
+\bibitem[Fan J., 2016]{p1} Jianqing Fan, Yuan Liao, And Weichen Wang (2016)
+\newblock Projected principal component analysis in factor models.
+\newblock \emph{ Annals of Statistics} 2016, Vol. 44, No. 1, 219–254.
+\end{thebibliography}
+}
+\end{frame}
+
+%------------------------------------------------
+
+\begin{frame}
+\Huge{\centerline{The End}}
+\end{frame}
+
+%----------------------------------------------------------------------------------------
+
+\end{document} 
