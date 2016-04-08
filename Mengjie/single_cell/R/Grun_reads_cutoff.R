@@ -33,6 +33,26 @@ ge = ggplot(data = mExpression, aes(x = cell, y = gene, fill = expression)) +
   scale_fill_gradient2() +
   theme(axis.ticks = element_blank(), axis.text = element_blank())
 
+ge
+
+cellMean = colMeans(Expression2)
+cellRank = names(sort(cellMean)) 
+
+sortExpression2 = Expression2[, cellRank]
+msortExpression2 = melt(sortExpression2)
+colnames(msortExpression2) = c("gene","cell","expression")
+
+gse = ggplot(data = msortExpression2, aes(x = cell, y = gene, fill = expression)) +
+  labs(x = "Cell", y = "Gene", fill = "Value", title = "Heatmap of Expression value for Grun reads cutoff \n sorted by column mean") +
+  geom_tile() + 
+  scale_fill_gradient2() +
+  theme(axis.ticks = element_blank(), axis.text = element_blank())
+
+gse
+
+
+
+
 # Spikein
 
 dim(Spikein)
@@ -51,6 +71,19 @@ gs = ggplot(data = mSpikein, aes(x = cell, y = spikein, fill = expression)) +
   scale_fill_gradient2() +
   theme(axis.ticks = element_blank(), axis.text = element_blank())
 
+gs
+
+sortSpikein2 = Spikein2[, cellRank]
+msortSpikein2 = melt(sortSpikein2)
+colnames(msortSpikein2) = c("gene","cell","expression")
+
+gss = ggplot(data = msortSpikein2, aes(x = cell, y = gene, fill = expression)) +
+  labs(x = "Cell", y = "Gene", fill = "Value", title = "Heatmap of  Spikein for Grun reads cutoff \n sorted by column mean") +
+  geom_tile() + 
+  scale_fill_gradient2() +
+  theme(axis.ticks = element_blank(), axis.text = element_blank())
+
+gss
 
 # Surrogate Variable Analysis  --------------------------------------------
 
