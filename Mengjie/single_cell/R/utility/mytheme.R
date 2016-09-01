@@ -6,7 +6,7 @@
 ## Author: Haaland
 ###############################################################################
 require(grid)
-
+require(scales)
 my_theme = function (base_size = 12, base_family = "") 
 {
 	theme_grey(base_size = base_size, base_family = base_family) %+replace% 
